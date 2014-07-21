@@ -7,12 +7,11 @@ val server = getServer(sc)
 val actualHandler = addPluginHandler(server)
 changeHandler(new PluginHandler(sqlContext), actualHandler, server)
 import sqlContext.createSchemaRDD
+def runQuery(sql:String) = {sqlContext.sql(sql).collect.foreach(println)}
 
 val commitRDD = commitLogToRdd("./data/detailed.spark.git.log")
 commitRDD.registerAsTable("commits")
 commitRDD.cache
-
-def runQuery(sql:String) = {sqlContext.sql(sql).collect.foreach(println)}
 
 runQuery("select author, count(*) as commitCount from commits group by author order by commitCount desc limit 20")
 

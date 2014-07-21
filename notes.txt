@@ -1,0 +1,100 @@
+My rough notes for things that I will like to do and report. It is of no use to anyone else, but is checked in as it is my repo :).
+
+Tutorial
+1. Spark Shell
+2. RDD collection
+3. Distribute
+
+
+Issues and Features
+1. Reserved keywords in schemaRDD for example
+case class CommitHistory(name:String, count: Int)
+runQuery("select name, count from commitHistory")
+
+
+Why Spark
+1.Scala makes it so good, sortBy, map, reduceByKey. Functions as first class citizens. "_", tuples.
+2. implicit
+
+
+Questions
+1. How do I see the table def
+
+
+Handy Commands
+def gis(s: String) = new GZIPInputStream(new BufferedInputStream(new FileInpuuthtStream(s)))
+def contents = Source.fromInputStream(gis("github/data/2013-04-11-9.json.gz"))
+
+local-cluster[1,1,512]
+
+Anti Thoughts
+"One example is that it is dependent on available memory; any large dataset that exceeds that will hit a huge performance wall." [http://www.informationweek.com/big-data/big-data-analytics/will-spark-google-dataflow-steal-hadoops-thunder/a/d-id/1278959?page_number=2]
+
+
+ADD_JARS="../lib/jcommon-1.0.22.jar,../lib/jfreechart-1.0.18.jar"
+
+java.util.Date is not handled
+
+
+import org.objectweb.asm._
+import java.io._
+
+Commit.getClass.getClassLoader.asInstanceOf[scala.tools.nsc.interpreter.IMain$TranslatingClassLoader]
+res0.classBytes(Commit.getClass.getName)
+val cReader = new ClassReader(new ByteArrayInputStream(res1))
+:val cw = new ClassVisitor(Opcodes.ASM5){
+            val mv = new MethodVisitor() {
+                override def visitLineNumber(line: Int, start: Label) {
+                System.out.println(line + " " +label);
+                super.visitLineNumber(line, start);
+                }
+            }
+
+            override def  visitAttribute(attr:Attribute) {
+                System.out.println("Class Attribute: "+attr.`type`);
+                super.visitAttribute(attr);
+            }
+
+            override def visitSource(source: String, debug: String) {
+                     System.out.println(source + "  " + debug);
+                     super.visitSource(source, debug)
+            }
+
+            override def visitMethod(access: Int, name:String, desc:String, signature:String, exceptions: Array[String]) : MethodVisitor {
+             System.out.println(name);
+             return mv
+            }
+}
+val cw = new ClassVisitor(Opcodes.ASM5){
+            val mv = new MethodVisitor(Opcodes.ASM5) {
+                override def visitLineNumber(line: Int, start: Label) {
+                System.out.println(line + " " +start);
+                super.visitLineNumber(line, start);
+                }
+            }
+
+            override def  visitAttribute(attr:Attribute) {
+                System.out.println("Class Attribute: "+attr.`type`);
+                super.visitAttribute(attr);
+            }
+
+            override def visitSource(source: String, debug: String) {
+                     System.out.println(source + "  " + debug);
+                     super.visitSource(source, debug)
+            }
+
+            override def visitMethod(access: Int, name:String, desc:String, signature:String, exceptions: Array[String]) : MethodVisitor = {
+             System.out.println(name);
+             return mv
+            }
+}
+
+cReader.accept(cw, 0)
+val fos = new FileOutputStream("/data/work/projects/DataEngineering/work/captured.tmp")
+fos.write(res1)
+fos.close
+
+
+
+Important files
+./sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SqlParser.scala
