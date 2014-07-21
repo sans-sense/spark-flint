@@ -11,14 +11,12 @@ import org.apache.spark.util.StatCounter
 
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.server.handler._
-import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.map.{ObjectMapper,JsonSerializer,SerializerProvider}
 import org.codehaus.jackson.map.module.SimpleModule
 import org.codehaus.jackson.JsonGenerator
-import org.codehaus.jackson.map.JsonSerializer
-import org.codehaus.jackson.map.SerializerProvider
 
 
-class PluginHandler(sqlContext: SQLContext, basePath:String = "/data/work/projects/DataEngineering/work/static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
+class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
 
   private val urlExtractor = """/(\w+)\.(html|json|js|css)""".r
   private val objectMapper = new ObjectMapper()
@@ -72,23 +70,22 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "/data/work/projec
       payload.commandName match {
         case "query" => response.getWriter().println(runQuery(payload.commandArgs))
         case "analyze" => response.getWriter().println(analyze(payload.commandArgs))
-        case _ => reportFailure(response)
+        case "desc" => response.getWriter().println(describe(payload.commandArgs))
+        case _ => reportFailure(response, new IllegalArgumentException(s"payload command sent as $payload.commandName"))
       }
     } catch {
-      case ex : MatchError => reportFailure(response)
+      case ex : Exception => reportFailure(response,ex)
     }
   }
 
-  private def reportFailure(response : HttpServletResponse) {
+  private def reportFailure(response : HttpServletResponse, ex:Exception) {
+    ex.printStackTrace
     response.getWriter().println("""{"success":false}""")
+
   }
 
   private def runQuery(sql:String):String = {
-    try{
       rowsToJSON(sqlContext.sql(sql).collect)
-    }catch{
-      case ex: Exception => return """{"success":false}"""
-    }
   }
 
   private def analyze(commandArgs:String):String = {
@@ -99,6 +96,11 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "/data/work/projec
     val stater = new DoubleRDDFunctions(sc.parallelize(doubleCounts))
 
     return """{ "stats":""" + toJSON(stater.stats) + ""","histogram":"""+ toJSON(stater.histogram(10)) +"}"
+  }
+
+  private def describe(tableName:String):String = {
+    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
+    toJSON(columnSeq.toArray)
   }
 
   private def rowsToJSON(rows: Array[org.apache.spark.sql.Row]):String = {
@@ -128,6 +130,7 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "/data/work/projec
       jgen.writeNumberField("mean", stat.mean);
       jgen.writeNumberField("min", stat.min);
       jgen.writeNumberField("max", stat.max);
+      jgen.writeNumberField("stdev", stat.stdev);
       jgen.writeEndObject();
     }
   }

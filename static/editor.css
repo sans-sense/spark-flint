@@ -27,3 +27,34 @@ div.cmdResultContainer {
 body {
     font-size: 12px;
 }
+
+.table-results {
+    width:80%;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: white;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+svg text {
+    stroke: wheat
+}

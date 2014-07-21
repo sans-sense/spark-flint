@@ -9,9 +9,13 @@ changeHandler(new PluginHandler(sqlContext), actualHandler, server)
 import sqlContext.createSchemaRDD
 def runQuery(sql:String) = {sqlContext.sql(sql).collect.foreach(println)}
 
-val commitRDD = commitLogToRdd("./data/detailed.spark.git.log")
-commitRDD.registerAsTable("commits")
-commitRDD.cache
+import java.nio.file.{Paths, Files}
+def registerCommitsAsTable(filePath:String, tableName:String) = {
+    if (Files.exists(Paths.get(filePath))) {
+        val commitRDD = commitLogToRdd(filePath)
+        commitRDD.registerAsTable(tableName)
+        commitRDD.cache
+    }
+}
 
-runQuery("select author, count(*) as commitCount from commits group by author order by commitCount desc limit 20")
-
+registerCommitsAsTable("./data/detailed.spark.git.log", "commits")
