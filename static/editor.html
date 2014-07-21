@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="/static/bootstrap.min.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/webui.css" type="text/css"/>
+    <script src="/static/sorttable.js"></script>
+    <script src="/static/jquery-1.11.1.min.js"></script>
+    <script src="/static/bootstrap-tooltip.js"></script>
+    <script src="/static/initialize-tooltips.js"></script>
+    <script src="/plugins/editor.js"></script>
+    <title>Spark shell - Spark Stages</title>
+    <link rel="stylesheet" href="/plugins/editor.css" type="text/css"/>
+  </head>
+  <body>
+    <div class="navbar navbar-static-top">
+      <div class="navbar-inner">
+        <a href="/" class="brand">
+          <img src="/static/spark-logo-77x50px-hd.png"/>
+        </a>
+        <ul class="nav">
+          <li class="">
+            <a href="/stages">Stages</a>
+          </li>
+          <li class="">
+            <a href="/storage">Storage</a>
+          </li>
+          <li class="">
+            <a href="/environment">Environment</a>
+          </li>
+          <li class="">
+            <a href="/executors">Executors</a>
+          </li>
+          <li class="active">
+            <a href="/plugins/">Editor</a>
+          </li>
+        </ul>
+        <p class="navbar-text pull-right"><strong>Spark shell</strong> application UI</p>
+      </div>
+    </div>
+      <div class="terminal">
+        <div id="results" class="resultTillNow" ng-bind-html="result_text"></div>
+        <div>
+          <span style="vertical-align:middle">&gt;&gt;</span><input id="shellInput" type="text" value="select author from commits limit 10" tabindex="1" >
+        </div>
+      </div>l
+</body>
+</html>

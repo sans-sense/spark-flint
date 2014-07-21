@@ -1,0 +1,29 @@
+.terminal {    
+    background-color: black;    
+    box-shadow: none;    
+    color: #FFFFFF;    
+    overflow: auto;    
+    width: 100%;    
+    position:absolute;
+    top:50px;
+    bottom:0px;
+}    
+
+.terminal input {    
+    background-color: black;
+    border: medium none;
+    color: #FFFFFF;
+    width: 80%;
+}
+
+div.cmdResultContainer {
+    padding: 5px 5px 10px 20px;
+}
+
+#shellInput {
+    font-size: 12px;
+}
+
+body {
+    font-size: 12px;
+}
