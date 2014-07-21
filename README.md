@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ### Shell Extension  
 Adds a simple editor to webUI for spark at http://localhost:4040/plugins. A hack for developers to get a better feel of data exploration. Is not for production, just local data exploration.
 
@@ -29,3 +30,9 @@ val commitHistogram = stater.histogram(5)
 val distArray = commitHistogram._1.take(commitHistogram._1.length - 1).zipWithIndex.map{case(y,i)=> (((y + commitHistogram._1(i+1))/2).toInt,commitHistogram._2(i).toInt)}
 new Grapher("demo").redraw(distArray)
 
+=======
+spark-flint
+===========
+
+Small utility library for apache spark
+>>>>>>> f1182fb826b60ef8644b659becceb95c9649dd23
