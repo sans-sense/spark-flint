@@ -51,10 +51,13 @@ body {
   shape-rendering: crispEdges;
 }
 
-.x.axis path {
-  display: none;
+svg text {
+    stroke: white;
+    fill:white;
+    stroke-width:0.5;
 }
 
-svg text {
-    stroke: wheat
+svg .axis-label {
+    text-anchor: end;
+    stroke: green;
 }

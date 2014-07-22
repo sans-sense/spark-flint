@@ -95,7 +95,7 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") exten
     val doubleCounts = sqlContext.sql(distSql).collect.map {row=> row(0).asInstanceOf[Long].toDouble}
     val stater = new DoubleRDDFunctions(sc.parallelize(doubleCounts))
 
-    return """{ "stats":""" + toJSON(stater.stats) + ""","histogram":"""+ toJSON(stater.histogram(10)) +"}"
+    return """{ "metadata" : {"tableName":"""" + tableName + """", "columnName":"""" + columnName +""""}, "stats":""" + toJSON(stater.stats) + ""","histogram":"""+ toJSON(stater.histogram(10)) +"}"
   }
 
   private def describe(tableName:String):String = {

@@ -25,6 +25,18 @@ Handy Commands
 def gis(s: String) = new GZIPInputStream(new BufferedInputStream(new FileInpuuthtStream(s)))
 def contents = Source.fromInputStream(gis("github/data/2013-04-11-9.json.gz"))
 
+sqlContext.sql("select locs from commits").collect
+res48.map(row=> row(0).asInstanceOf[Map[String,Int]])
+res49.flatMap(locs => locs.keys)
+res50.map(key=> (key,1)).reduceByKey(_+_)
+sc.parallelize(res50)
+res52.map(key=> (key,1)).reduceByKey(_+_)
+case class Churn(fileName:String, changeCount:Int)
+res53.map{case (x,y) => new Churn(x, y)}
+res57.first
+res57.registerAsTable("churns")
+res57.cache
+
 local-cluster[1,1,512]
 
 Anti Thoughts

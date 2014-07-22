@@ -20,12 +20,12 @@ function Plotter() {
         .scale(y)
         .orient("left");
 
-    this.plot = function(selector, stats, histogram) {
+    this.plot = function(selector, stats, histogram, metaData) {
         var domainValues = prepareDataset(histogram)
         d3.selectAll(selector+" svg").remove();
         var svg = createSVGContainer(selector);
         setXYScales(domainValues, stats);
-        drawAxises(svg)
+        drawAxises(svg, metaData)
         plotValues(svg, domainValues);
     }
 
@@ -51,14 +51,20 @@ function Plotter() {
 
     function setXYScales(domainValues, stats) {
         x.domain(_.map(domainValues, function(d){return d.range}));
-        y.domain([stats.min, stats.max]);
+        y.domain([0, d3.max(domainValues, function(d){return d.freq})]);
     }
 
-    function drawAxises(svg) {
+    function drawAxises(svg, metaData) {
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
+            .call(xAxis)
+            .append("text")
+            .attr("y", 19)
+            .attr("dy", ".71em")
+            .attr("x", Math.ceil(width * 0.8))
+            .attr("class","axis-label")
+            .text("count($1)".format(metaData.tableName));
 
         svg.append("g")
             .attr("class", "y axis")
@@ -68,7 +74,7 @@ function Plotter() {
             .attr("y", 6)
             .attr("dy", ".71em")
             .attr("class","axis-label")
-            .text("Frequency");
+            .text(metaData.columnName);
     }
 
 
