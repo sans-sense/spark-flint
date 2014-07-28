@@ -25,17 +25,11 @@ Handy Commands
 def gis(s: String) = new GZIPInputStream(new BufferedInputStream(new FileInpuuthtStream(s)))
 def contents = Source.fromInputStream(gis("github/data/2013-04-11-9.json.gz"))
 
-sqlContext.sql("select locs from commits").collect
-res48.map(row=> row(0).asInstanceOf[Map[String,Int]])
-res49.flatMap(locs => locs.keys)
-res50.map(key=> (key,1)).reduceByKey(_+_)
-sc.parallelize(res50)
-res52.map(key=> (key,1)).reduceByKey(_+_)
-case class Churn(fileName:String, changeCount:Int)
-res53.map{case (x,y) => new Churn(x, y)}
-res57.first
-res57.registerAsTable("churns")
-res57.cache
+val locs = sqlContext.sql("select locs from commits").collect.map(row=> row(0).asInstanceOf[Map[String,Int]])
+case class Churn(fileName:String)
+val locsRDD = sc.parallelize(locs.flatMap(loc => loc.keys).map{new Churn(_)})
+locsRDD.registerAsTable("churnsAlt")
+locsRDD.cacheut
 
 local-cluster[1,1,512]
 
@@ -110,3 +104,42 @@ fos.close
 
 Important files
 ./sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SqlParser.scala
+
+
+FPGrowth
+val minSupport = 3L
+
+val locs = sqlContext.sql("select locs from commits").map(row => row(0).asInstanceOf[Map[String,Int]])
+
+val fList = sqlContext.sql("select fileName, count(*) from churns group by fileName").map(row => (row(0).asInstanceOf[String],row(1).asInstanceOf[Long])).collect.foldLeft(Map():Map[String,Long])((m,v) => m + v)
+
+val locListRDD = locs.map(loc => loc.keys.toList.filter{fList(_) > minSupport}.sortWith{ fList(_) > fList(_)}.fold("":String){(m,v) => m+" " +v}.trim ).filter(loc => loc.count(_ == ' ') > 0)
+
+val fItems = fList.filter(_._2 > minSupport).map(_._1)
+val localLocs = locListRDD.collect
+val root = new Node("root")
+localLocs.foreach{loc => root.addChildren(loc.split(" "))}
+val fPairs = fItems.foldLeft(List():List[String])((a, v) => a ++ projections(minSupport.toInt - 1 , v, root)).distinct.sorted
+
+1095 transactions where more than one frequent file has been modified
+706 frequently modified files
+:load exp.scala
+val root = new Node("root")
+val localLocs = locListRDD.collect
+localLocs.foreach{loc => root.addChildren(loc.split(" "))}
+root.getChildrenAtAnyDepth("FileClient.java")
+
+
+
+// start with nodes, pick one
+0. initialize path as node letter
+1. if node.parent is already visited return else compute total support for item in node.parent 
+2. if less than minSupport, don't emit
+   else add node to path and all other parents till root, set parent as root
+2.1 mark node as visited, move to parent
+3. if parent is not null move to parent, do step 1 to 3
+
+
+support is sum of count of all reachable nodes with same item
+
+def project

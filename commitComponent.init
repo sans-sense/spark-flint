@@ -1,0 +1,55 @@
+import java.io._
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.SparkContext
+import java.nio.file.{Paths, Files}
+
+:load GitLogParser.scala
+:load LocalFPGrowth.scala
+
+case class Churn(fileName:String)
+case class FPair(fileGroup:String, patSize:Int)
+
+def commitLogToRdd(fileName:String):org.apache.spark.rdd.RDD[Commit] = {
+  val commitIterator = StatLogProcessor.iterate(new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
+  val commitArray = commitIterator.toArray
+  val serializableCommitArray = commitArray.map{commit=> Commit(commit.hash, commit.author, commit.timestamp, commit.message, commit.locs.map(identity))}
+  val commitRDD = sc.parallelize(serializableCommitArray)
+  commitRDD.cache
+  return commitRDD
+}
+
+def registerCommitsAsTable(filePath:String, tableName:String) = {
+  val commitRDD = commitLogToRdd(filePath)
+  commitRDD.registerAsTable(tableName)
+  commitRDD.cache
+}
+
+def registerChurnsAsTable(commitTableName:String) = {
+  val locs = sqlContext.sql(s"select locs from $commitTableName").collect.map(row=> row(0).asInstanceOf[Map[String,Int]])
+  val locsRDD = sc.parallelize(locs.flatMap(loc => loc.keys).map{new Churn(_)})
+  locsRDD.cache
+  locsRDD.registerAsTable("churns")
+}
+
+def computeFrequentItems(commitTableName:String, churnTableName:String) {
+  val minSupport = 3L
+  val locs = sqlContext.sql(s"select locs from $commitTableName").map(row => row(0).asInstanceOf[Map[String,Int]])
+  val fList = sqlContext.sql(s"select fileName, count(*) from $churnTableName group by fileName").map(row => (row(0).asInstanceOf[String],row(1).asInstanceOf[Long])).collect.foldLeft(Map():Map[String,Long])((m,v) => m + v)
+  val locListRDD = locs.map(loc => loc.keys.toList.filter{fList(_) > minSupport}.sortWith{ fList(_) > fList(_)}.fold("":String){(m,v) => m+" " +v}.trim ).filter(loc => loc.count(_ == ' ') > 0)
+  val fItems = fList.filter(_._2 > minSupport).map(_._1)
+  val localLocs = locListRDD.collect
+  val root = new Node("root")
+  localLocs.foreach{loc => root.addChildren(loc.split(" "))}
+  val fPairs = fItems.foldLeft(List():List[String])((a, v) => a ++ FPGrowthOps.projections(minSupport.toInt - 1 , v, root)).distinct.sorted
+
+  val fPairRDD = sc.parallelize(fPairs.map(fPair => FPair(fPair, fPair.count(_ == ' '))))
+  fPairRDD.registerAsTable("fpairs")
+}
+
+val filePath = "./data/detailed.spark.git.log"
+
+if (Files.exists(Paths.get(filePath))) {
+  registerCommitsAsTable(filePath, "commits")
+  registerChurnsAsTable("commits")
+  computeFrequentItems("commits", "churns")
+}

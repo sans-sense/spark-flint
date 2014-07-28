@@ -156,6 +156,10 @@ $(function() {
 
     addAlias("top10","select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 10");
 
+    addAlias("top20","select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 20");
+
+    addAlias("count","select count(*) from $1");
+
     prettyPrinters["query"] = function(data, containerId) {
         var resultsStr = "";
         if (data.length > 0) {

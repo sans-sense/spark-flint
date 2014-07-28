@@ -136,4 +136,3 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") exten
   }
 
 }
-
