@@ -1,6 +1,15 @@
 // Really dumb implementation of a tree, it is mutable, non-distributable :(, does not use zipper or scalaz
 import collection.mutable
 
+/**
+ * FPTree trversal for projections
+ * 0. initialize path as node letter
+ * 1. if node.parent is already visited return else compute total support for item in node.parent 
+ * 2. if less than minSupport, don't emit
+ * else add node to path and all other parents till root, set parent as root
+ * 3 mark node as visited, move to parent
+ * 3. if parent is not null move to parent, do step 1 to 4
+ */
 class Node(name:String, parent :Node = null, children: collection.mutable.Map[String,Node] = collection.mutable.Map(), var count:Int = 1) {
 
   def getName():String = return name

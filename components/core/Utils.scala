@@ -40,3 +40,27 @@ def addPluginHandler(server:Server):ContextHandler = {
 def runQuery(sql:String, sqlContext: SQLContext) = {
   sqlContext.sql(sql).collect.foreach(println)
 }
+
+
+class Component(name:String, help:String) {
+  override def toString:String = {
+    return s"$name $help"
+  }
+}
+
+object ComponentManager {
+  private val registry:collection.mutable.Map[String, Component] = collection.mutable.Map()
+
+  def register(name:String, help:String) = {
+    registry(name) = new Component(name, help)
+  }
+
+  def listComponents():Iterable[String] = {
+    return registry.keys
+  }
+
+  def describe(name:String):Component = {
+    return registry(name)
+  }
+}
+

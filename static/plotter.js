@@ -91,6 +91,6 @@ function Plotter() {
     }
 
     function drawStats(svg, stats) {
-        svg.append("text").attr("y",20).attr("x", 200).text("count: $1, mean:$2, min:$3, max:$4, stdev:$5".format(stats.count, stats.mean, stats.min, stats.max, stats.stdev ));
+        svg.append("text").attr("y",20).attr("x", 200).text("count: $1, mean:$2, min:$3, max:$4, stdev:$5".format(stats.count, parseFloat(stats.mean).toFixed(2), stats.min, stats.max, parseFloat(stats.stdev).toFixed(2) ));
     }
 }).call(Plotter.prototype)

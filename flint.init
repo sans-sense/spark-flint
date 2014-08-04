@@ -1,6 +1,6 @@
 import org.apache.spark.rdd._
-:load Utils.scala
-:load PluginHandler.scala
+:load components/core/Utils.scala
+:load components/core/PluginHandler.scala
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 val server = getServer(sc)
 val actualHandler = addPluginHandler(server)

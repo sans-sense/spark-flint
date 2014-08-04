@@ -99,7 +99,7 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") exten
   }
 
   private def describe(tableName:String):String = {
-    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
+    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType)}
     toJSON(columnSeq.toArray)
   }
 

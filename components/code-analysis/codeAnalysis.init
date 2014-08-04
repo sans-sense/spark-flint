@@ -3,8 +3,8 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.SparkContext
 import java.nio.file.{Paths, Files}
 
-:load GitLogParser.scala
-:load LocalFPGrowth.scala
+:load ./components/code-analysis/GitLogParser.scala
+:load ./components/code-analysis/LocalFPGrowth.scala
 
 case class Churn(fileName:String)
 case class FPair(fileGroup:String, patSize:Int)
@@ -53,3 +53,11 @@ if (Files.exists(Paths.get(filePath))) {
   registerChurnsAsTable("commits")
   computeFrequentItems("commits", "churns")
 }
+
+
+ComponentManager.register("code-analysis", """ Code Analysis Component
+Adds  registerCommitsAsTable
+      registerChurnsAsTable
+      computeFrequentItems
+Methods, for details look at codeAnalysis.init""")
+

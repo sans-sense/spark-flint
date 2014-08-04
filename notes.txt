@@ -13,8 +13,8 @@ runQuery("select name, count from commitHistory")
 
 
 Why Spark
-1.Scala makes it so good, sortBy, map, reduceByKey. Functions as first class citizens. "_", tuples.
-2. implicit
+1. Scala makes it so good, sortBy, map, reduceByKey. Functions as first class citizens. "_", tuples.
+2. Implicit
 
 
 Questions
@@ -29,7 +29,7 @@ val locs = sqlContext.sql("select locs from commits").collect.map(row=> row(0).a
 case class Churn(fileName:String)
 val locsRDD = sc.parallelize(locs.flatMap(loc => loc.keys).map{new Churn(_)})
 locsRDD.registerAsTable("churnsAlt")
-locsRDD.cacheut
+locsRDD.cache
 
 local-cluster[1,1,512]
 
@@ -40,62 +40,6 @@ Anti Thoughts
 ADD_JARS="../lib/jcommon-1.0.22.jar,../lib/jfreechart-1.0.18.jar"
 
 java.util.Date is not handled
-
-
-import org.objectweb.asm._
-import java.io._
-
-Commit.getClass.getClassLoader.asInstanceOf[scala.tools.nsc.interpreter.IMain$TranslatingClassLoader]
-res0.classBytes(Commit.getClass.getName)
-val cReader = new ClassReader(new ByteArrayInputStream(res1))
-:val cw = new ClassVisitor(Opcodes.ASM5){
-            val mv = new MethodVisitor() {
-                override def visitLineNumber(line: Int, start: Label) {
-                System.out.println(line + " " +label);
-                super.visitLineNumber(line, start);
-                }
-            }
-
-            override def  visitAttribute(attr:Attribute) {
-                System.out.println("Class Attribute: "+attr.`type`);
-                super.visitAttribute(attr);
-            }
-
-            override def visitSource(source: String, debug: String) {
-                     System.out.println(source + "  " + debug);
-                     super.visitSource(source, debug)
-            }
-
-            override def visitMethod(access: Int, name:String, desc:String, signature:String, exceptions: Array[String]) : MethodVisitor {
-             System.out.println(name);
-             return mv
-            }
-}
-val cw = new ClassVisitor(Opcodes.ASM5){
-            val mv = new MethodVisitor(Opcodes.ASM5) {
-                override def visitLineNumber(line: Int, start: Label) {
-                System.out.println(line + " " +start);
-                super.visitLineNumber(line, start);
-                }
-            }
-
-            override def  visitAttribute(attr:Attribute) {
-                System.out.println("Class Attribute: "+attr.`type`);
-                super.visitAttribute(attr);
-            }
-
-            override def visitSource(source: String, debug: String) {
-                     System.out.println(source + "  " + debug);
-                     super.visitSource(source, debug)
-            }
-
-            override def visitMethod(access: Int, name:String, desc:String, signature:String, exceptions: Array[String]) : MethodVisitor = {
-             System.out.println(name);
-             return mv
-            }
-}
-
-cReader.accept(cw, 0)
 val fos = new FileOutputStream("/data/work/projects/DataEngineering/work/captured.tmp")
 fos.write(res1)
 fos.close
@@ -105,41 +49,4 @@ fos.close
 Important files
 ./sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SqlParser.scala
 
-
-FPGrowth
-val minSupport = 3L
-
-val locs = sqlContext.sql("select locs from commits").map(row => row(0).asInstanceOf[Map[String,Int]])
-
-val fList = sqlContext.sql("select fileName, count(*) from churns group by fileName").map(row => (row(0).asInstanceOf[String],row(1).asInstanceOf[Long])).collect.foldLeft(Map():Map[String,Long])((m,v) => m + v)
-
-val locListRDD = locs.map(loc => loc.keys.toList.filter{fList(_) > minSupport}.sortWith{ fList(_) > fList(_)}.fold("":String){(m,v) => m+" " +v}.trim ).filter(loc => loc.count(_ == ' ') > 0)
-
-val fItems = fList.filter(_._2 > minSupport).map(_._1)
-val localLocs = locListRDD.collect
-val root = new Node("root")
-localLocs.foreach{loc => root.addChildren(loc.split(" "))}
-val fPairs = fItems.foldLeft(List():List[String])((a, v) => a ++ projections(minSupport.toInt - 1 , v, root)).distinct.sorted
-
-1095 transactions where more than one frequent file has been modified
-706 frequently modified files
-:load exp.scala
-val root = new Node("root")
-val localLocs = locListRDD.collect
-localLocs.foreach{loc => root.addChildren(loc.split(" "))}
-root.getChildrenAtAnyDepth("FileClient.java")
-
-
-
-// start with nodes, pick one
-0. initialize path as node letter
-1. if node.parent is already visited return else compute total support for item in node.parent 
-2. if less than minSupport, don't emit
-   else add node to path and all other parents till root, set parent as root
-2.1 mark node as visited, move to parent
-3. if parent is not null move to parent, do step 1 to 3
-
-
-support is sum of count of all reachable nodes with same item
-
-def project
+curl 'http://localhost:4040/plugins/command.json' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' --data 'payload={"command":"desc","args":"activities"}'
