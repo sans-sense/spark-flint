@@ -1,4 +1,4 @@
-:load components/shell-enhancements/SourceLinker.scala
+:load components/shell-enhancements/SourceUtil.scala
 ComponentManager.register("shell-enhance", """ Shell enhancement Component
 Adds  SourceUtil Module which has handy methods to examine classes
  for details try SourceUtil.printSelf""")
