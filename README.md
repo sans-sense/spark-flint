@@ -14,16 +14,16 @@ For code-analysis load the code-analysis component using
 :load components/code-analysis/codeAnalysis.init
 
 Analyze the git log for finding top committers, code churn (most changed files), distribution of commit and churn. The commands to run for this.  
-1. Generate thg git log for some project with, git log --numstat > detailed.commit.log  
-2. Register the file as a Table in spark with, registerCommitsAsTable("./detailed.commit.log", "commits")  
-3. Query this table from the ui (http://localhost:4040/plugins) with,select author, count(*) as commitCount from commits group by author order by commitCount desc limit 10") or use the alias top10 as top10 commits,author
-4. On UI view distribution and top values with "analyze commits,author"
+* Generate thg git log for some project with, git log --numstat > detailed.commit.log  
+* Register the file as a Table in spark with, registerCommitsAsTable("./detailed.commit.log", "commits")  
+* Query this table from the ui (http://localhost:4040/plugins) with,select author, count(*) as commitCount from commits group by author order by commitCount desc limit 10") or use the alias top10 as top10 commits,author  
+* On UI view distribution and top values with "analyze commits,author"  
 
 In short the commit log is now mapped as an table (SchemaRDD) which can be queried like any other table. The UI supports other commands like analyze tablename, fieldname.  For a complete list run help. You can of course create any other table in repl and run sql on it from the web UI.
 
 
 ### Misc  
-If we add asm-all-5.0.3.jar (download)[http://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.0.3/asm-all-5.0.3.jar] to classpath using add_jars, we can also view the source of spark classes from repl.
+If we add [asm-all-5.0.3.jar](http://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.0.3/asm-all-5.0.3.jar) to classpath using add_jars, we can also view the source of spark classes from repl.
 
 * :load components/shell-enhancements/shellEnhance.init
 * SourceUtil.indexFolder("../../spark")
