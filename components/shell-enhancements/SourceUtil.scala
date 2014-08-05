@@ -11,17 +11,25 @@ object SourceUtil {
     return bytes
   }
 
-  def print(className:String) = {
+  def print(className:String, printer : PrintWriter = new PrintWriter(System.out)) = {
     val cReader = new ClassReader(new ByteArrayInputStream(getClassBytes(className)))
-    cReader.accept(new TraceClassVisitor(new PrintWriter(System.out)), 0)
+    cReader.accept(new TraceClassVisitor(printer), 0)
   }
 
   def printType(obj:Any) = {
     print(obj.getClass.getName)
   }
 
-  def source(className:String) = {
-    printSourceForPath(indexes(className))
+  def source(obj:Any) = {
+    val stringWriter = new StringWriter()
+    val sourceRegex = """.*compiled from:\s+(\w+)\.(java|scala)""".r
+    print(obj.getClass.getName, new PrintWriter(stringWriter))
+    stringWriter.toString.split("\n").foreach {
+      line => sourceRegex findFirstIn line match {
+        case Some(s) => val sourceRegex(fileName, extension) = s; printSourceForPath(indexes(fileName + "." + extension))
+        case None => //do nothing
+      }
+    }
   }
 
   def printSelf() = {

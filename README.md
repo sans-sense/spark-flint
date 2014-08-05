@@ -1,4 +1,3 @@
-=======
 spark-flint
 ===========
 
@@ -6,29 +5,27 @@ Adds a simple editor to webUI for spark at http://localhost:4040/plugins. A hack
 
 #### Starting it  
 
-:load user.init  
+* :load flint.init  
 Assuming that we launched spark-shell from this folder or use the relative path, use this command on the spark repl  
 
 #### Sample  
+For code-analysis load the code-analysis component using
+
+:load components/code-analysis/codeAnalysis.init
 
 Analyze the git log for finding top committers, code churn (most changed files), distribution of commit and churn. The commands to run for this.  
 1. Generate thg git log for some project with, git log --numstat > detailed.commit.log  
 2. Register the file as a Table in spark with, registerCommitsAsTable("./detailed.commit.log", "commits")  
-3. Query this table from the ui (http://localhost:4040/plugins) with,select author, count(*) as commitCount from commits group by author order by commitCount desc limit 20")
-4. On UI view distribution and top values with, analyze commits,author
+3. Query this table from the ui (http://localhost:4040/plugins) with,select author, count(*) as commitCount from commits group by author order by commitCount desc limit 10") or use the alias top10 as top10 commits,author
+4. On UI view distribution and top values with "analyze commits,author"
 
 In short the commit log is now mapped as an table (SchemaRDD) which can be queried like any other table. The UI supports other commands like analyze tablename, fieldname.  For a complete list run help. You can of course create any other table in repl and run sql on it from the web UI.
 
 
-#### Handy things  
-Some useful commands to read a json file, register it as table, print the schema, query some field, plot the histogram using JFreeChart  
-val commits = sqlContext.jsonFile("./github/data.json")  
-commits.registerAsTable("commits")  
-commits.cache  
-commits.printSchema()  
-val dCommits = sqlContext.sql("select actor, count(*) as commitCount from commits group by actor").collect.map {row=> row(1).asInstanceOf[Long].toDouble}  
-import org.apache.spark.rdd._  
-val stater = new DoubleRDDFunctions(sc.parallelize(dCommits))  
-val commitHistogram = stater.histogram(5)  
-val distArray = commitHistogram._1.take(commitHistogram._1.length - 1).zipWithIndex.map{case(y,i)=> (((y + commitHistogram._1(i+1))/2).toInt,commitHistogram._2(i).toInt)}  
-new Grapher("demo").redraw(distArray)  
+### Misc  
+If we add asm-all-5.0.3.jar (download)[http://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.0.3/asm-all-5.0.3.jar] to classpath using add_jars, we can also view the source of spark classes from repl.
+
+* :load components/shell-enhancements/shellEnhance.init
+* SourceUtil.indexFolder("../../spark")
+* SourceUtil.source(res6.head._2) where res6 is the output of
+sqlContext.sql("select * from commits limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType)}
