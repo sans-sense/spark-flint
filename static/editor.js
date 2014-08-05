@@ -1,5 +1,6 @@
 // yes, I am in a time bubble and don't know any better libraries that jquery
 $(function() {
+    var shellInputContainerSel = '#shellInputContainer';
     var shellInputSel = '#shellInput';
     var resultsSel = "#results";
     var serverUrl = "/plugins/command.json";
@@ -56,7 +57,7 @@ $(function() {
 	    var keycode = (event.keyCode ? event.keyCode : event.which);
 	    if(keycode == '13'){
             $(resultsSel).append("<br>" + shellPrompt + command);
-            $(shellInputSel).hide();
+            $(shellInputContainerSel).hide();
             runCommand(command)
             currHistoryCursor = commandStack.length;
 	    } else if (keycode == '40' && event.ctrlKey) {
@@ -142,7 +143,7 @@ $(function() {
     function setInputCmdAs(initialCommand) {
         var initialCommand = initialCommand || "";
         $(shellInputSel).val(initialCommand);
-        $(shellInputSel).show();
+        $(shellInputContainerSel).show();
         $(shellInputSel).focus();
     }
 

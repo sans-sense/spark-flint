@@ -6,3 +6,15 @@ val server = getServer(sc)
 val actualHandler = addPluginHandler(server)
 changeHandler(new PluginHandler(sqlContext), actualHandler, server)
 import sqlContext.createSchemaRDD
+println("""
+Modify PluginHandler.scala to add new methods to the servlet and run
+ :load components/core/PluginHandler.scala and changeHandler(new PluginHandler(sqlContext), actualHandler, server).
+
+Some other useful methods are
+runQuery(<sql>, sqlContext) which will print the results of the sql, do use limit in the sql as it does a collect.
+
+You can also load other components like shell-enhancements with
+:load components/shell-enhancements/shellEnhance.init
+
+The idea to (ab)use load is to facilitate rapid reloading, of course this means that we can not use packages :(
+""")

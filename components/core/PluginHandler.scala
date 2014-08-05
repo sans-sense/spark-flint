@@ -15,7 +15,9 @@ import org.codehaus.jackson.map.{ObjectMapper,JsonSerializer,SerializerProvider}
 import org.codehaus.jackson.map.module.SimpleModule
 import org.codehaus.jackson.JsonGenerator
 
-
+/**
+ * Simple servlet like thing for jetty, which runs simple commands from the UI
+ */
 class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
 
   private val urlExtractor = """/(\w+)\.(html|json|js|css)""".r
@@ -99,7 +101,7 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") exten
   }
 
   private def describe(tableName:String):String = {
-    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType)}
+    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
     toJSON(columnSeq.toArray)
   }
 

@@ -65,7 +65,7 @@ function Plotter() {
             .attr("dy", ".71em")
             .attr("x", Math.ceil(width * 0.8))
             .attr("class","axis-label")
-            .text("count($1)".format(metaData.tableName));
+            .text("count( $1 )".format(metaData.tableName));
 
         svg.append("g")
             .attr("class", "y axis")
@@ -75,7 +75,7 @@ function Plotter() {
             .attr("y", 6)
             .attr("dy", ".71em")
             .attr("class","axis-label")
-            .text(metaData.columnName);
+            .text("count( $1 )".format(metaData.columnName));
     }
 
 
