@@ -26,7 +26,8 @@ object SourceUtil {
     print(obj.getClass.getName, new PrintWriter(stringWriter))
     stringWriter.toString.split("\n").foreach {
       line => sourceRegex findFirstIn line match {
-        case Some(s) => val sourceRegex(fileName, extension) = s; printSourceForPath(indexes(fileName + "." + extension))
+        case Some(s) => val sourceRegex(fileName, extension) = s; 
+          printSourceForPath(fileName + "." + extension)
         case None => //do nothing
       }
     }
@@ -46,21 +47,25 @@ object SourceUtil {
     }
   }
 
-  def indexFolder(path:String) = {
-    indexes ++= accumulateFiles(new File(path))
-  }
-
-  private def printSourceForPath(filePath:String) = {
-    val source = scala.io.Source.fromFile(filePath)
-    source.getLines.foreach{
-         println
+  private def printSourceForPath(fileName:String) = {
+    if (indexes.contains(fileName)) {
+      val source = scala.io.Source.fromFile(indexes(fileName))
+      source.getLines.foreach{
+        println
+      }
+      source.close
+    } else {
+      println(s"Can't find $fileName, we can add more source files to index by SourceUtil.indexFolder method")
     }
-    source.close
   }
 
   private def accumulateFiles(f: File): Map[String,String] = {
     val these = f.listFiles
     these.filter(_.isDirectory == false ).foldLeft(Map():Map[String,String])((r,file) => if (file.getName.endsWith("scala") || file.getName.endsWith("java")) { r ++ Map(file.getName-> file.getAbsolutePath)} else r) ++ these.filter(_.isDirectory).foldLeft(Map():Map[String,String])((r,file) => r ++ accumulateFiles(file))
+  }
+
+  def indexFolder(path:String) = {
+    indexes ++= accumulateFiles(new File(path))
   }
     
 }
