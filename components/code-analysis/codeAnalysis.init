@@ -12,7 +12,7 @@ case class FPair(fileGroup:String, groupSize:Int)
 // creates a RDD from the passed file
 def commitLogToRdd(fileName:String):org.apache.spark.rdd.RDD[Commit] = {
   // read the commit log into a simple collection
-  val commitIterator = StatLogProcessor.iterate(new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
+  val commitIterator = GitLogProcessor.iterate(new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
   val commitArray = commitIterator.toArray
 
   // transform so that spark can handle the locs (file vs changed lines count) map

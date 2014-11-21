@@ -1,14 +1,17 @@
 import org.apache.spark.rdd._
 :load components/core/Utils.scala
-:load components/core/PluginHandler.scala
+:load components/core/WorkbenchHandler.scala
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 val server = getServer(sc)
-val actualHandler = addPluginHandler(server)
-changeHandler(new PluginHandler(sqlContext), actualHandler, server)
+server.stop
+val wbHandler = addContextHandler(server, "/workbench")
+wbHandler.setHandler(new WorkbenchHandler(sqlContext))
+addTabDisplayHack(server)
+server.start
 import sqlContext.createSchemaRDD
 println("""
-Modify PluginHandler.scala to add new methods to the servlet and run
- :load components/core/PluginHandler.scala and changeHandler(new PluginHandler(sqlContext), actualHandler, server).
+Modify WorkbenchHandler.scala to add new methods to the servlet and run
+ :load components/core/WorkbenchHandler.scala and changeHandler(new WorkbenchHandler(sqlContext), wbHandler, server).
 
 Some other useful methods are
 runQuery(<sql>, sqlContext) which will print the results of the sql, do use limit in the sql as it does a collect.

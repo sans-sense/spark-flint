@@ -78,7 +78,7 @@ $(function() {
             localCommands[cmdSplits[1]].call(this, command);
         } else {
             if (aliases[cmdSplits[1]]) {
-                command = aliases[cmdSplits[1]].format(cmdSplits[2].split(","))
+                command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","))
             }
             runServerCommand(command);
         }

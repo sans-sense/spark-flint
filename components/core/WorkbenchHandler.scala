@@ -18,9 +18,9 @@ import org.codehaus.jackson.JsonGenerator
 /**
  * Simple servlet like thing for jetty, which runs simple commands from the UI
  */
-class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
+class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
 
-  private val urlExtractor = """/(\w+)\.(html|json|js|css)""".r
+  private val urlExtractor = """/(\w+)\.(html|json|js|css)/*""".r
   private val objectMapper = new ObjectMapper()
   private val module = new SimpleModule("CustomSerializer", objectMapper.version)
   module.addSerializer(classOf[StatCounter], new StatCountSerializer)
@@ -66,6 +66,7 @@ class PluginHandler(sqlContext: SQLContext, basePath:String = "./static/") exten
 
   def sendCommandResponse(request : HttpServletRequest, response : HttpServletResponse) {
     val payloadStr = request.getParameter("payload")
+    println(request)
     val parsedPayload = JSON.parseFull(payloadStr).get.asInstanceOf[Map[String,String]]
     try {
       val DynamicRequestMaker(payload) = parsedPayload

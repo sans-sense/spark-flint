@@ -1,8 +1,24 @@
 import java.io._
+import javax.servlet.ServletException
+import javax.servlet.http._
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.server.handler._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.SparkContext
+
+class TabHackHandler(basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
+  @throws(classOf[IOException])
+  @throws(classOf[ServletException])
+  override def handle(target :String, baseRequest: Request,  request : HttpServletRequest, response : HttpServletResponse)  = {
+    val source = scala.io.Source.fromFile(basePath + "sorttable.js")
+    val lines = source.getLines mkString "\n"
+    response.setContentType("application/x-javascript")
+    source.close()
+    response.getWriter().println(lines)
+    response.setStatus(HttpServletResponse.SC_OK);
+    baseRequest.setHandled(true);
+  }
+}
 
 def changeHandler(handler: org.eclipse.jetty.server.handler.AbstractHandler, actualHandler:ContextHandler, server: Server) = {
   server.stop
@@ -27,15 +43,18 @@ def getServer(sc: org.apache.spark.SparkContext):Server = {
 }
 
 
-def addPluginHandler(server:Server):ContextHandler = {
-  val pluginHandler = new ContextHandler("/plugins")
-  pluginHandler.setHandler(new DefaultHandler)
-  server.getHandler.asInstanceOf[ContextHandlerCollection].addHandler(pluginHandler)
-  server.stop
-  server.start
-  return pluginHandler
+def addContextHandler(server:Server, path:String):ContextHandler = {
+  // for faster dev, adds a ctx handler, so that we can change the actual handler as we develop
+  val ctxHandler = new ContextHandler(path)
+  ctxHandler.setHandler(new DefaultHandler)
+  server.getHandler.asInstanceOf[ContextHandlerCollection].addHandler(ctxHandler)
+  return ctxHandler
 }
 
+def addTabDisplayHack(server:Server) = {
+  val jsReplaceHackCtx = addHandler(server, "/static/sorttable.js")
+  jsReplaceHackCtx.setHandler(new TabHackHandler)
+}
 
 def runQuery(sql:String, sqlContext: SQLContext) = {
   sqlContext.sql(sql).collect.foreach(println)
@@ -63,4 +82,5 @@ object ComponentManager {
     return registry(name)
   }
 }
+
 

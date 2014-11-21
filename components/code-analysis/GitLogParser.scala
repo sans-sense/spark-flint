@@ -7,13 +7,14 @@ import java.io.{InputStreamReader, BufferedReader, FileInputStream}
 // original source at https://gist.github.com/holograph/5945358
 case class Commit( hash: String, author: String, timestamp: java.sql.Timestamp, year:Int, month:Int, dayOfWeek:Int, message: String, metrics: Map[ String, Int ] )
 
-object StatLogProcessor {
+object GitLogProcessor {
 
-  private object StatLogParser extends RegexParsers with Serializable{
+  private object GitLogParser extends RegexParsers with Serializable{
     val eol = "\n" | "\\z".r
     override val skipWhitespace = false
 
-    val partialHash = "[0-9a-f]{7}".r
+    // some partialhashes are 8 chars long too
+    val partialHash = "[0-9a-f]*".r
     val fullHash = "[0-9a-f]{40}".r
     val header = "commit" ~ rep( whiteSpace ) ~> fullHash <~ eol
     val author = "Author:" ~ rep( whiteSpace ) ~> ".+".r <~ eol
@@ -76,7 +77,7 @@ object StatLogProcessor {
   }
 
   def parse( in: Reader[ Char ] ): Option[( Commit, Reader[ Char ] )] = {
-    val result = StatLogParser.parse( StatLogParser.extractedCommit, in )
+    val result = GitLogParser.parse( GitLogParser.extractedCommit, in )
     if ( result.successful ) Some( result.get, result.next ) else None
   }
 
