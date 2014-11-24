@@ -9,14 +9,17 @@ import java.nio.file.{Paths, Files}
 case class Churn(fileName:String)
 case class FPair(fileGroup:String, groupSize:Int)
 
+ case class SCommit( hash: String, author: String, timestamp: java.sql.Timestamp, year:Int, month:Int, dayOfWeek:Int, message: String, metrics: Seq[ String ] )
+
 // creates a RDD from the passed file
-def commitLogToRdd(fileName:String):org.apache.spark.rdd.RDD[Commit] = {
+def commitLogToRdd(fileName:String):org.apache.spark.rdd.RDD[SCommit] = {
   // read the commit log into a simple collection
   val commitIterator = GitLogProcessor.iterate(new BufferedReader(new InputStreamReader(new FileInputStream(fileName))))
   val commitArray = commitIterator.toArray
 
   // transform so that spark can handle the locs (file vs changed lines count) map
-  val serializableCommitArray = commitArray.map{commit=> Commit(commit.hash, commit.author, commit.timestamp, commit.year, commit.month, commit.dayOfWeek, commit.message, commit.metrics.map(identity))}
+  // val serializableCommitArray = commitArray.map{commit=> Commit(commit.hash, commit.author, commit.timestamp, commit.year, commit.month, commit.dayOfWeek, commit.message, commit.metrics.map(identity))}//case(k,v) => k})}
+  val serializableCommitArray = commitArray.map{commit=> SCommit(commit.hash, commit.author, commit.timestamp, commit.year, commit.month, commit.dayOfWeek, commit.message, commit.metrics.map{ case(k,v) => k}.toList)}
   val commitRDD = sc.parallelize(serializableCommitArray)
   commitRDD.cache
   return commitRDD
@@ -31,8 +34,8 @@ def registerCommitsAsTable(filePath:String, tableName:String) = {
 
 // utility method to create chruns table (mines file names from the commits) from the commits table
 def registerChurnsAsTable(commitTableName:String, tableName:String = "churns") = {
-  val fileGroups = sqlContext.sql(s"select metrics from $commitTableName").collect.map(row=> row(0).asInstanceOf[Map[String,Int]])
-  val fileGroupsRDD = sc.parallelize(fileGroups.flatMap(fileGroup => fileGroup.keys).map{new Churn(_)})
+  val fileGroups = sqlContext.sql(s"select metrics from $commitTableName").collect.map(row=> row(0).asInstanceOf[Seq[String]])
+  val fileGroupsRDD = sc.parallelize(fileGroups.flatMap(identity).map{new Churn(_)})
   fileGroupsRDD.cache
   fileGroupsRDD.registerAsTable(tableName)
 }
@@ -40,13 +43,13 @@ def registerChurnsAsTable(commitTableName:String, tableName:String = "churns") =
 // FP-Growth to identify groups of files that are modified together, operates on commits and churns table. We can pass minSupport (number of times the file must appear in overall churns),  min + stdDev is a good start for this
 def computeFrequentItems(commitTableName:String, churnTableName:String, tableName:String = "fpairs", minSupport:Long = 3L) {
   // get the list of files in each commit
-  val lofs = sqlContext.sql(s"select metrics from $commitTableName").map(row => row(0).asInstanceOf[Map[String,Int]])
+  val lofs = sqlContext.sql(s"select metrics from $commitTableName").map(row => row(0).asInstanceOf[Seq[String]])
 
   // get churn (file vs change count) as a map
   val fList = sqlContext.sql(s"select fileName, count(*) from $churnTableName group by fileName").map(row => (row(0).asInstanceOf[String],row(1).asInstanceOf[Long])).collect.foldLeft(Map():Map[String,Long])((m,v) => m + v)
 
   // create a RDD from file list where each file group in each commit is sorted by its overall count across all commits
-  val lofListRDD = lofs.map(lof => lof.keys.toList.filter{fList(_) > minSupport}.sortWith{ fList(_) > fList(_)}.fold("":String){(m,v) => m+" " +v}.trim ).filter(lof => lof.count(_ == ' ') > 0)
+  val lofListRDD = lofs.map(lof => lof.filter{fList(_) > minSupport}.sortWith{ fList(_) > fList(_)}.fold("":String){(m,v) => m+" " +v}.trim ).filter(lof => lof.count(_ == ' ') > 0)
 
   // filter out all files that are not changed much (less than minimum support)
   val fItems = fList.filter(_._2 > minSupport).map(_._1)

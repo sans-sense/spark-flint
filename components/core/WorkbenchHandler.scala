@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import scala.util.parsing.json._
-
+import scala.collection._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.rdd._
 import org.apache.spark.util.StatCounter
@@ -107,10 +107,18 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
       val catalogField = sqlContext.getClass.getDeclaredField("catalog");
       allow(catalogField)
       val catalog = catalogField.get(sqlContext).asInstanceOf[org.apache.spark.sql.catalyst.analysis.SimpleCatalog]
-      val tablesField = catalog.getClass.getDeclaredField("tables")
-      allow(tablesField)
-      val tableNames = tablesField.get(catalog).asInstanceOf[mutable.HashMap[String, org.apache.spark.sql.catalyst.plans.logical.LogicalPlan]].keys
-      toJSON(tableNames.toArray)
+      if (catalog != null) {
+        val tablesField = catalog.getClass.getDeclaredField("tables")
+        allow(tablesField)
+        val tableNames = tablesField.get(catalog);
+        if (tableNames != null){
+          toJSON(tableNames.asInstanceOf[mutable.HashMap[String, org.apache.spark.sql.catalyst.plans.logical.LogicalPlan]].keys.toArray)
+        } else {
+          "[]"
+        }
+      } else {
+        "[]"
+      }
     } else {
       val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
       toJSON(columnSeq.toArray)
@@ -148,5 +156,4 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
       jgen.writeEndObject();
     }
   }
-
 }
