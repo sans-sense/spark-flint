@@ -3,7 +3,7 @@ $(function() {
     var shellInputContainerSel = '#shellInputContainer';
     var shellInputSel = '#shellInput';
     var resultsSel = "#results";
-    var serverUrl = "/plugins/command.json";
+    var serverUrl = "/workbench/command.json";
     var shellPrompt = ">> ";
     var localCommands = {
        "clear": function() {
@@ -14,7 +14,7 @@ $(function() {
                           "clear: clears the console", 
                           "select: run sql commands",
                           "analyze &lt;tableName&gt; &lt;columnName&gt;: analyzes the dist and top 10 values in this column of this table",
-                         "desc &lt;tableName&gt;: gets the column names and type for this table",
+                         "desc [tableName]: if tableName is given gets the column names and type for this table or gets all available tables",
                          "aliases: lists all aliases, to use an alias type cmdName parameters e.g to run top10, use top10 commits,author",
                          "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples"].join("<br>")
            $(resultsSel).append(helpStr);
@@ -87,7 +87,7 @@ $(function() {
     function runServerCommand(commandStr) {
 		var resultsStr = "";
         var commandHolder = { id:commandNumber};
-        var cmdParser = /^(desc|analyze)\s+(.*)/;
+        var cmdParser = /^(desc|analyze)\s*(.*)/;
         var parsedResults;
         var cmdType, cmdArgs;
         cmdType = "query";
@@ -181,7 +181,7 @@ $(function() {
     }
 
     prettyPrinters["desc"] = function(data, containerId) {
-       return  prettyPrinters["query"].call(this, _.map(data, function(val){ return [val._1, val._2]}), containerId)
+       return  prettyPrinters["query"].call(this, _.map(data, function(val){ return (val._1)?  [val._2, val._1] : [val]}), containerId)
     }
 
     prettyPrinters["analyze"] = function(data, containerId) {

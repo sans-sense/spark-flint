@@ -102,8 +102,19 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
   }
 
   private def describe(tableName:String):String = {
-    val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
-    toJSON(columnSeq.toArray)
+    if (tableName == null || tableName.trim().equals("")) {
+      def allow(field: java.lang.reflect.Field)=field.setAccessible(true)
+      val catalogField = sqlContext.getClass.getDeclaredField("catalog");
+      allow(catalogField)
+      val catalog = catalogField.get(sqlContext).asInstanceOf[org.apache.spark.sql.catalyst.analysis.SimpleCatalog]
+      val tablesField = catalog.getClass.getDeclaredField("tables")
+      allow(tablesField)
+      val tableNames = tablesField.get(catalog).asInstanceOf[mutable.HashMap[String, org.apache.spark.sql.catalyst.plans.logical.LogicalPlan]].keys
+      toJSON(tableNames.toArray)
+    } else {
+      val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
+      toJSON(columnSeq.toArray)
+    }
   }
 
   private def rowsToJSON(rows: Array[org.apache.spark.sql.Row]):String = {

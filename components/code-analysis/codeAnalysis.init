@@ -73,10 +73,11 @@ if (Files.exists(Paths.get(filePath))) {
 }
 
 // register it with the component manager for help in case anyone is interested later
-ComponentManager.register("code-analysis", """ Code Analysis Component
-Adds  registerCommitsAsTable
-      registerChurnsAsTable
-      computeFrequentItems
-Methods, for details look at codeAnalysis.init""")
+ComponentManager.register("code-analysis", """ Adds git log parsing and other code analysis utils
+Adds methods:
+     registerCommitsAsTable
+     registerChurnsAsTable
+     computeFrequentItems Methods, 
+For details look at codeAnalysis.init""")
 ComponentManager.describe("code-analysis")
 

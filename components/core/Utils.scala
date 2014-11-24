@@ -52,7 +52,7 @@ def addContextHandler(server:Server, path:String):ContextHandler = {
 }
 
 def addTabDisplayHack(server:Server) = {
-  val jsReplaceHackCtx = addHandler(server, "/static/sorttable.js")
+  val jsReplaceHackCtx = addContextHandler(server, "/static/sorttable.js")
   jsReplaceHackCtx.setHandler(new TabHackHandler)
 }
 

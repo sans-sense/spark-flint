@@ -27,7 +27,7 @@ function Plotter() {
         setXYScales(domainValues, stats);
         drawAxises(svg, metaData)
         plotValues(svg, domainValues);
-        drawStats(svg, stats);
+        drawStats(svg, stats, metaData);
     }
 
     function prepareDataset(histogram) {
@@ -90,7 +90,11 @@ function Plotter() {
             .attr("height", function(d) { return Math.abs(height - y(d.freq)); });
     }
 
-    function drawStats(svg, stats) {
-        svg.append("text").attr("y",20).attr("x", 200).text("count: $1, mean:$2, min:$3, max:$4, stdev:$5".format(stats.count, parseFloat(stats.mean).toFixed(2), stats.min, stats.max, parseFloat(stats.stdev).toFixed(2) ));
+    function drawStats(svg, stats, metaData) {
+        svg.append("text").attr("y", 20).attr("x", 200).text("$1 $2 with $3 to $4 $5, average $6 and std deviation of $7".format(stats.count, metaData.columnName, stats.min, stats.max, metaData.tableName, niceFormat(stats.mean), niceFormat(stats.stdev)));
+    }
+
+    function niceFormat(value) {
+        return parseFloat(value).toFixed(2);
     }
 }).call(Plotter.prototype)
