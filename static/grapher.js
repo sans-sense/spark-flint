@@ -18,7 +18,7 @@ function Grapher() {
         d3Data = adaptToD3Format(graphData);
         loadingMsg = getLoadingMessage(svg);
         setTimeout(render, 10);
-    }
+    };
 
 
     function createLayout(width, height) {
@@ -116,7 +116,7 @@ function Grapher() {
 
     function dragmove(d) { 
         var evt = d3.event;
-        var currSvg = d3.select(d3.event.sourceEvent.target).select("g.top-container")
+        var currSvg = d3.select(d3.event.sourceEvent.target).select("g.top-container");
         setPositions(d3.event.dx, d3.event.dy, 0.25, currSvg);
     }
 
@@ -151,4 +151,4 @@ function Grapher() {
         svgContainer.attr("pos-state", JSON.stringify(state));
     }
     
-}).call(Grapher.prototype)
+}).call(Grapher.prototype);

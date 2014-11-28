@@ -1,4 +1,4 @@
-// yes, I am in a time bubble and don't know any better libraries that jquery
+// yes, I am in a time bubble and don't know any better libraries than jquery
 $(function() {
     var shellInputContainerSel = '#shellInputContainer';
     var shellInputSel = '#shellInput';
@@ -16,12 +16,12 @@ $(function() {
                           "analyze &lt;tableName&gt;, &lt;columnName&gt;: analyzes the dist and top 10 values in this column of this table",
                          "desc [tableName]: if tableName is given gets the column names and type for this table or gets all available tables",
                          "aliases: lists all aliases, to use an alias type cmdName parameters e.g to run top10, use top10 commits,author",
-                         "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples"].join("<br>")
+                         "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples"].join("<br>");
            $(resultsSel).append(helpStr);
        },
        "aliases": function() {
            var aliasListStr = "";
-           _.each(aliases, function(value, key) {aliasListStr+= "<br> $1 : $2".format(key, value)});
+           _.each(aliases, function(value, key) {aliasListStr+= "<br> $1 : $2".format(key, value);});
            $(resultsSel).append(aliasListStr);
        },
        "alias":function(command) {
@@ -41,12 +41,14 @@ $(function() {
 
     if (typeof String.prototype.format !== 'function') {
         String.prototype.format = function() {
-            var formatted = this, i;
+            var formatted = this, i, vals;
             if ($.isArray(arguments[0])) {
-                arguments = arguments[0];
+                vals = arguments[0];
+            } else {
+                vals = arguments;
             }
-            for (i = 0; i < arguments.length; i++) {
-                formatted = formatted.replace(new RegExp("\\$" + (i + 1),"g"), arguments[i]);
+            for (i = 0; i < vals.length; i++) {
+                formatted = formatted.replace(new RegExp("\\$" + (i + 1),"g"), vals[i]);
             }
             return formatted;
         };
@@ -58,7 +60,7 @@ $(function() {
 	    if(keycode == '13'){
             $(resultsSel).append("<br>" + shellPrompt + command);
             $(shellInputContainerSel).hide();
-            runCommand(command)
+            runCommand(command);
             currHistoryCursor = commandStack.length;
 	    } else if (keycode == '40' && event.ctrlKey) {
             setInputCmdAs(getNextCommand());//down
@@ -69,16 +71,16 @@ $(function() {
 
     function runCommand(command) {
         var cmdSplits = cmdRegex.exec(command);
-        if (cmdSplits == null) {
+        if (cmdSplits === null) {
             cmdSplits = ["",command];
         }
         commandStack.push(command);
         if (localCommands[cmdSplits[1]]) {
-            setInputCmdAs()
+            setInputCmdAs();
             localCommands[cmdSplits[1]].call(this, command);
         } else {
             if (aliases[cmdSplits[1]]) {
-                command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","))
+                command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","));
             }
             runServerCommand(command);
         }
@@ -107,7 +109,7 @@ $(function() {
             data : "payload="+JSON.stringify({"command":cmdType, "args": cmdArgs})
         }).done(function(data) {
             var payload = data.success;
-            if (payload == false) {
+            if (payload === false) {
 			    $("#"+resultContainerId).html("<br>Could not execute query");
             } else {
                 commandHolder.result = data;
@@ -140,8 +142,8 @@ $(function() {
         }
     }
 
-    function setInputCmdAs(initialCommand) {
-        var initialCommand = initialCommand || "";
+    function setInputCmdAs(command) {
+        var initialCommand = command || "";
         $(shellInputSel).val(initialCommand);
         $(shellInputContainerSel).show();
         $(shellInputSel).focus();
@@ -161,16 +163,16 @@ $(function() {
 
     addAlias("count","select count(*) from $1");
 
-    prettyPrinters["query"] = function(data, containerId) {
+    prettyPrinters.query = function(data, containerId) {
         var resultsStr = "";
         if (data.length > 0) {
             resultsStr +="<table class='table table-bordered table-results'>";
             $.each(data, function(){
-				var trStr = "<tr>"
+				var trStr = "<tr>";
 				$.each(this, function(k, v){
-					trStr += "<td>"+v+"</td>"
+					trStr += "<td>"+v+"</td>";
 				});
-				resultsStr += trStr
+				resultsStr += trStr;
 			}); //end of each block
             resultsStr += "</table>";
         } else {
@@ -178,18 +180,18 @@ $(function() {
         }
         
         setCmdResult(containerId,resultsStr);
-    }
+    };
 
-    prettyPrinters["desc"] = function(data, containerId) {
-       return  prettyPrinters["query"].call(this, _.map(data, function(val){ return (val._1)?  [val._2, val._1] : [val]}), containerId)
-    }
+    prettyPrinters.desc = function(data, containerId) {
+       return  prettyPrinters.query.call(this, _.map(data, function(val){ return (val._1)?  [val._2, val._1] : [val];}), containerId);
+    };
 
-    prettyPrinters["analyze"] = function(data, containerId) {
+    prettyPrinters.analyze = function(data, containerId) {
         plotter.plot("#"+containerId, data.stats, data.histogram, data.metadata);
-    }
+    };
 
-    prettyPrinters["dataset"] = function(data, containerId) {
+    prettyPrinters.dataset = function(data, containerId) {
         plotter.graph("#"+containerId, data);
-    }
+    };
     // support alias top10 = "select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 10 " 
 });

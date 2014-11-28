@@ -7,7 +7,7 @@ function Plotter() {
         height = Math.ceil(window.screen.width * 0.3) - margin.top - margin.bottom;
 
     var x = d3.scale.ordinal()
-        .rangeRoundBands([0, width], .2);
+        .rangeRoundBands([0, width], 0.2);
 
     var y = d3.scale.linear()
         .range([height,0]);
@@ -21,18 +21,18 @@ function Plotter() {
         .orient("left");
 
     this.plot = function(selector, stats, histogram, metaData) {
-        var domainValues = prepareDataset(histogram)
+        var domainValues = prepareDataset(histogram);
         d3.selectAll(selector+" svg").remove();
         var svg = createSVGContainer(selector);
         setXYScales(domainValues, stats);
-        drawAxises(svg, metaData)
+        drawAxises(svg, metaData);
         plotValues(svg, domainValues);
         drawStats(svg, stats, metaData);
-    }
+    };
 
     this.graph = function(selector, graphData) {
         return new Grapher().plot(selector, graphData);
-    }
+    };
 
     function prepareDataset(histogram) {
         return joinDataSets(histogram._1, histogram._2);
@@ -55,8 +55,8 @@ function Plotter() {
     }
 
     function setXYScales(domainValues, stats) {
-        x.domain(_.map(domainValues, function(d){return d.range}));
-        y.domain([0, d3.max(domainValues, function(d){return d.freq})]);
+        x.domain(_.map(domainValues, function(d){return d.range;}));
+        y.domain([0, d3.max(domainValues, function(d){return d.freq;})]);
     }
 
     function drawAxises(svg, metaData) {
@@ -101,4 +101,4 @@ function Plotter() {
     function niceFormat(value) {
         return parseFloat(value).toFixed(2);
     }
-}).call(Plotter.prototype)
+}).call(Plotter.prototype);
