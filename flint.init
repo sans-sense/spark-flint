@@ -1,6 +1,8 @@
 import org.apache.spark.rdd._
 :load components/core/Utils.scala
+:load components/core/DataSetManager.scala
 :load components/core/WorkbenchHandler.scala
+
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 val server = getServer(sc)
 server.stop
@@ -9,6 +11,13 @@ wbHandler.setHandler(new WorkbenchHandler(sqlContext))
 addTabDisplayHack(server)
 server.start
 import sqlContext.createSchemaRDD
+
+def getKryoConf() = {
+    val conf = sc.getConf
+    val kryoConf = conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    kryoConf
+}
+
 println("""
 Modify WorkbenchHandler.scala to add new methods to the servlet and run
  :load components/core/WorkbenchHandler.scala and changeHandler(new WorkbenchHandler(sqlContext), wbHandler, server).
@@ -18,6 +27,8 @@ runQuery(<sql>, sqlContext) which will print the results of the sql, do use limi
 
 You can also load other components like shell-enhancements with
 :load components/shell-enhancements/shellEnhance.init
+
+You can create a kryo conf using getKryoConf, we will still need to restart sc manually
 
 The idea to (ab)use load is to facilitate rapid reloading, of course this means that we can not use packages :(
 """)

@@ -1,0 +1,27 @@
+import org.apache.spark.graphx._
+
+:load ./components/code-analysis/CodeGrapher.scala
+
+def deriveName(x:String):String = { 
+  val r = """(\S+) (\d+) (.+) (.+)""".r; 
+  val r(owner, pack, name, args) = x; 
+  s"$owner $name $args"
+}
+
+def createGraph() = {
+  val methodNodes = FileClassReader.processJar(sc.getClass.getProtectionDomain.getCodeSource.getLocation.getFile(), false)
+  case class SMethodNode(methodName:String, invokedMethods:List[String])
+  val  sMethodNodes:java.util.List[SMethodNode] = new java.util.ArrayList[SMethodNode]()
+  methodNodes.foreach{item => sMethodNodes.add(SMethodNode(item.toString, item.getInvokedMethods.toList))}
+  val uniqueMethods:java.util.Set[String] = new java.util.HashSet[String]()
+  sMethodNodes.foreach{ m => uniqueMethods.addAll(m.invokedMethods); uniqueMethods.add(deriveName(m.methodName)) }
+  val myLookup:java.util.Map[String, Long] = new java.util.HashMap[String, Long]()
+  uniqueMethods.zipWithIndex.foreach{ x => myLookup.put(x._1, java.lang.Long.valueOf(x._2)) }
+
+  val  edgeRaw:java.util.List[Edge[String]] = new java.util.ArrayList[Edge[String]]()
+  sMethodNodes.foreach{ mN => val mName = deriveName(mN.methodName); edgeRaw.addAll(mN.invokedMethods.map(m => Edge(myLookup.get(m), myLookup.get(mName), "invokedBy")))}
+  sc.parallelize(edgeRaw)
+  val vertexRDD = sc.parallelize(myLookup.toList).map(x=> (x._2, x._1))
+  val edgeRDD = sc.parallelize(edgeRaw)
+  Graph(vertexRDD, edgeRDD)
+}

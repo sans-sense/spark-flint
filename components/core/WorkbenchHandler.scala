@@ -3,10 +3,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import scala.util.parsing.json._
-import scala.collection._
+import scala.util.parsing.json.JSON
+import scala.collection.mutable
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.rdd._
+import org.apache.spark.rdd.DoubleRDDFunctions
 import org.apache.spark.util.StatCounter
 
 import org.eclipse.jetty.server._
@@ -66,7 +66,6 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
 
   def sendCommandResponse(request : HttpServletRequest, response : HttpServletResponse) {
     val payloadStr = request.getParameter("payload")
-    println(request)
     val parsedPayload = JSON.parseFull(payloadStr).get.asInstanceOf[Map[String,String]]
     try {
       val DynamicRequestMaker(payload) = parsedPayload
@@ -74,6 +73,7 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
         case "query" => response.getWriter().println(runQuery(payload.commandArgs))
         case "analyze" => response.getWriter().println(analyze(payload.commandArgs))
         case "desc" => response.getWriter().println(describe(payload.commandArgs))
+        case "dataset" =>  response.getWriter().println(getDataSet(payload.commandArgs))
         case _ => reportFailure(response, new IllegalArgumentException(s"payload command sent as $payload.commandName"))
       }
     } catch {
@@ -88,7 +88,11 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
   }
 
   private def runQuery(sql:String):String = {
-      rowsToJSON(sqlContext.sql(sql).collect)
+    rowsToJSON(sqlContext.sql(sql).collect)
+  }
+
+  private def getDataSet(dataSetName:String):String = {
+    toJSON(DataSetManager.get(dataSetName))
   }
 
   private def analyze(commandArgs:String):String = {

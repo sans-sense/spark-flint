@@ -1,12 +1,12 @@
-import java.io._
+import java.io.{IOException}
 import javax.servlet.ServletException
-import javax.servlet.http._
-import org.eclipse.jetty.server._
-import org.eclipse.jetty.server.handler._
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+import org.eclipse.jetty.server.{Request, Server}
+import org.eclipse.jetty.server.handler.{AbstractHandler, ContextHandler, DefaultHandler, ContextHandlerCollection}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.SparkContext
 
-class TabHackHandler(basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
+class TabHackHandler(basePath:String = "./static/") extends AbstractHandler {
   @throws(classOf[IOException])
   @throws(classOf[ServletException])
   override def handle(target :String, baseRequest: Request,  request : HttpServletRequest, response : HttpServletResponse)  = {
@@ -20,25 +20,22 @@ class TabHackHandler(basePath:String = "./static/") extends org.eclipse.jetty.se
   }
 }
 
-def changeHandler(handler: org.eclipse.jetty.server.handler.AbstractHandler, actualHandler:ContextHandler, server: Server) = {
+def changeHandler(handler: AbstractHandler, actualHandler:ContextHandler, server: Server) = {
   server.stop
   actualHandler.setHandler(handler)
   server.start
 }
 
 def getServer(sc: org.apache.spark.SparkContext):Server = {
+  // all  interesting things are private, so let's break it
   def allow(field: java.lang.reflect.Field)=field.setAccessible(true)
-  val field = sc.getClass.getDeclaredField("ui");
-  allow(field)
-  val ui = field.get(sc)
+  val uiField = sc.getClass.getDeclaredField("ui");
   val serverInfoField = Class.forName("org.apache.spark.ui.WebUI").getDeclaredField("serverInfo")
-  allow(serverInfoField)
-  val infoOption:Object = serverInfoField.get(ui)
-  val optionMethod = Class.forName("scala.Option").getDeclaredMethod("get")
-  optionMethod.setAccessible(true)
-  val serverInfo:Object = optionMethod.invoke(infoOption)
   val serverField = Class.forName("org.apache.spark.ui.ServerInfo").getDeclaredField("server")
-  allow(serverField)
+  List(uiField, serverInfoField, serverField).foreach{ field => allow(field)}
+
+  val ui = uiField.get(sc) match { case Some(ui) => ui}
+  val serverInfo = serverInfoField.get(ui) match { case Some(serverInfo) => serverInfo }
   return serverField.get(serverInfo).asInstanceOf[org.eclipse.jetty.server.Server]
 }
 

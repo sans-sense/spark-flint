@@ -12,6 +12,7 @@
     <script src="/workbench/underscore.js"></script>
     <script src="/workbench/d3.js"></script>
     <script src="/workbench/plotter.js"></script>
+    <script src="/workbench/grapher.js"></script>
     <title>Spark shell - WorkBench</title>
     <link rel="stylesheet" href="/workbench/editor.css" type="text/css"/>
   </head>
@@ -22,6 +23,9 @@
           <img src="/static/spark-logo-77x50px-hd.png"/>
         </a>
         <ul class="nav">
+          <li class="">
+            <a href="/jobs">Jobs</a>
+          </li>
           <li class="">
             <a href="/stages">Stages</a>
           </li>
@@ -34,7 +38,7 @@
           <li class="">
             <a href="/executors">Executors</a>
           </li>
-          <li class="active">
+          <li class="active workbench">
             <a href="/workbench/">WorkBench</a>
           </li>
         </ul>
@@ -44,7 +48,7 @@
       <div class="terminal">
         <div id="results" class="resultTillNow" ng-bind-html="result_text"></div>
         <div id="shellInputContainer">
-          <span style="vertical-align:middle">&gt;&gt;</span><input id="shellInput" type="text" value="help" tabindex="1" >
+          <span style="vertical-align:middle">&gt;&gt;</span><input id="shellInput" type="text" value="dataset smallGraph" tabindex="1" >
         </div>
       </div>
 </body>

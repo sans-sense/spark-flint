@@ -13,7 +13,7 @@ $(function() {
            var helpStr = ["","help: shows this output", 
                           "clear: clears the console", 
                           "select: run sql commands",
-                          "analyze &lt;tableName&gt; &lt;columnName&gt;: analyzes the dist and top 10 values in this column of this table",
+                          "analyze &lt;tableName&gt;, &lt;columnName&gt;: analyzes the dist and top 10 values in this column of this table",
                          "desc [tableName]: if tableName is given gets the column names and type for this table or gets all available tables",
                          "aliases: lists all aliases, to use an alias type cmdName parameters e.g to run top10, use top10 commits,author",
                          "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples"].join("<br>")
@@ -87,7 +87,7 @@ $(function() {
     function runServerCommand(commandStr) {
 		var resultsStr = "";
         var commandHolder = { id:commandNumber};
-        var cmdParser = /^(desc|analyze)\s*(.*)/;
+        var cmdParser = /^(desc|analyze|dataset)\s*(.*)/;
         var parsedResults;
         var cmdType, cmdArgs;
         cmdType = "query";
@@ -188,5 +188,8 @@ $(function() {
         plotter.plot("#"+containerId, data.stats, data.histogram, data.metadata);
     }
 
+    prettyPrinters["dataset"] = function(data, containerId) {
+        plotter.graph("#"+containerId, data);
+    }
     // support alias top10 = "select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 10 " 
 });

@@ -30,6 +30,10 @@ function Plotter() {
         drawStats(svg, stats, metaData);
     }
 
+    this.graph = function(selector, graphData) {
+        return new Grapher().plot(selector, graphData);
+    }
+
     function prepareDataset(histogram) {
         return joinDataSets(histogram._1, histogram._2);
     }

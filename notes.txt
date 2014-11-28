@@ -50,3 +50,6 @@ Important files
 ./sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SqlParser.scala
 
 curl 'http://localhost:4040/plugins/command.json' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' --data 'payload={"command":"desc","args":"activities"}'
+
+
+../../spark/bin/spark-shell --jars /home/apurba/.m2/repository/org/ow2/asm/asm-all/5.0.3/asm-all-5.0.3.jar --total-executor-cores 4 --master local

@@ -498,7 +498,7 @@ var forEach = function(object, block, context) {
 //AN- not fun
 window.onload = function() {
     var navItems = $("ul.nav li")
-    if (navItems.length === 4) {
-        $("ul.nav li:last").after("<li><a href='/workbench/'>WorkBench</a></li>")
+    if ($("ul.nav li.workbench").size() === 0) {
+        $("ul.nav li:last").after("<li class='workbench'><a href='/workbench/'>WorkBench</a></li>");
     }
 };
