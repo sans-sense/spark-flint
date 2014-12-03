@@ -9,6 +9,7 @@ server.stop
 val wbHandler = addContextHandler(server, "/workbench")
 wbHandler.setHandler(new WorkbenchHandler(sqlContext))
 addTabDisplayHack(server)
+addContextHandler(server, "/img").setHandler(new WorkbenchHandler(sqlContext))
 server.start
 import sqlContext.createSchemaRDD
 

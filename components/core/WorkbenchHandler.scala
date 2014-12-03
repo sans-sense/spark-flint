@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.{FileInputStream, BufferedInputStream, IOException};
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ import org.codehaus.jackson.JsonGenerator
  */
 class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
 
-  private val urlExtractor = """/(\w+)\.(html|json|js|css)/*""".r
+  private val urlExtractor = """/([\w|-]+)\.(html|json|js|css|png)/*""".r
   private val objectMapper = new ObjectMapper()
   private val module = new SimpleModule("CustomSerializer", objectMapper.version)
   module.addSerializer(classOf[StatCounter], new StatCountSerializer)
@@ -53,17 +53,25 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
         sendStaticFile(fileNameWithoutExt, extension, response)
       case "css" => response.setContentType("text/css")
         sendStaticFile(fileNameWithoutExt, extension, response)
+      case "png" => response.setContentType("image/png")
+        sendStaticFile(fileNameWithoutExt, extension, response)
       case _ => throw new IllegalArgumentException("unknown extension "+extension)
     }
   }
 
-  def sendStaticFile(fileNameWithoutExt :String, extension: String, response : HttpServletResponse) {
-    val source = scala.io.Source.fromFile(basePath + fileNameWithoutExt+"."+extension)
-    val lines = source.getLines mkString "\n"
-    source.close()
-    response.getWriter().println(lines)
-  }
+  // def sendStaticFile(fileNameWithoutExt :String, extension: String, response : HttpServletResponse) {
+  //   val source = scala.io.Source.fromFile(basePath + fileNameWithoutExt+"."+extension)
+  //   val lines = source.getLines mkString "\n"
+  //   source.close()
+  //   response.getWriter().println(lines)
+  // }
 
+  def sendStaticFile(fileNameWithoutExt :String, extension: String, response : HttpServletResponse) {
+    val bis = new BufferedInputStream(new FileInputStream(basePath + fileNameWithoutExt+"."+extension))
+    val buffer = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+    bis.close();
+    response.getOutputStream().write(buffer, 0, buffer.length);
+  }
   def sendCommandResponse(request : HttpServletRequest, response : HttpServletResponse) {
     val payloadStr = request.getParameter("payload")
     val parsedPayload = JSON.parseFull(payloadStr).get.asInstanceOf[Map[String,String]]

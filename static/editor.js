@@ -191,7 +191,29 @@ $(function() {
     };
 
     prettyPrinters.dataset = function(data, containerId) {
-        plotter.graph("#"+containerId, data);
+        var selector, graph;
+        selector = "#"+containerId
+        $(selector).append('<div class="search-graph"><button type="button" class="btn btn-small zoom-in" title="Zoom-In"><span class="icon icon-zoom-in zoom-in" /></button> <button type="button" class="btn btn-small" title="Zoom-Out"><span class="icon icon-zoom-out" /></button> <button type="button" class="btn btn-small" title="Rectangle-select"><span class="icon icon-pencil" /></button> <input type="text" placeholder="Search Vertices"/></div>')
+        graph = plotter.graph(selector, data);
+        addSearch($(selector +" .search-graph input"), graph);
+        addZoom($(selector +" .search-graph button:not(:last)"), graph);
     };
+
+
+    function addSearch(elSelector, graph) {
+        elSelector.keypress(function(event) {
+            var keycode = (event.keyCode ? event.keyCode : event.which);
+	        if(keycode == '13'){
+		        graph.search(elSelector.val());
+	        }
+        });
+    }
+
+    function addZoom(elSelector, graph) {
+        elSelector.click(function(event) {
+            var zoomIn = $(event.target).hasClass("zoom-in");
+            graph.zoom(zoomIn);
+        })
+    }
     // support alias top10 = "select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 10 " 
 });

@@ -28,6 +28,7 @@ function Plotter() {
         drawAxises(svg, metaData);
         plotValues(svg, domainValues);
         drawStats(svg, stats, metaData);
+        return {"selector":selector, "data":stats};
     };
 
     this.graph = function(selector, graphData) {
