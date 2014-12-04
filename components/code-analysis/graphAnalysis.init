@@ -1,4 +1,5 @@
 import org.apache.spark.graphx._
+import collection.JavaConverters._
 
 :load ./components/code-analysis/CodeGrapher.scala
 
@@ -25,3 +26,10 @@ def createGraph() = {
   val edgeRDD = sc.parallelize(edgeRaw)
   Graph(vertexRDD, edgeRDD)
 }
+
+val graph = createGraph()
+val smallGraph = graph.subgraph(vpred = (vid, attr) => attr.startsWith("org/apache/spark/graphx/impl"))
+DataSetManager.register("smallGraph", Map("nodes" -> smallGraph.vertices.collect, "links" -> smallGraph.edges.collect.map{ e => Array(e.srcId, e.dstId, e.attr)}).asJava)
+
+
+println("A graph of all methods and their invocations in spark jar has been created and is bound to val graph, a subset of this graph is bound to smallGraph")

@@ -13,10 +13,11 @@ $(function() {
            var helpStr = ["","help: shows this output", 
                           "clear: clears the console", 
                           "select: run sql commands",
-                          "analyze &lt;tableName&gt;, &lt;columnName&gt;: analyzes the dist and top 10 values in this column of this table",
+                          "histogram &lt;tableName&gt;, &lt;columnName&gt;: Plots the histogram",
                          "desc [tableName]: if tableName is given gets the column names and type for this table or gets all available tables",
                          "aliases: lists all aliases, to use an alias type cmdName parameters e.g to run top10, use top10 commits,author",
-                         "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples"].join("<br>");
+                         "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples",
+                         "graph dataset: plots a force directed graph (flowery thingy) for a dataset, the dataset should have been registered before via the spark-shell"].join("<br>");
            $(resultsSel).append(helpStr);
        },
        "aliases": function() {
@@ -89,7 +90,7 @@ $(function() {
     function runServerCommand(commandStr) {
 		var resultsStr = "";
         var commandHolder = { id:commandNumber};
-        var cmdParser = /^(desc|analyze|dataset)\s*(.*)/;
+        var cmdParser = /^(desc|histogram|graph)\s*(.*)/;
         var parsedResults;
         var cmdType, cmdArgs;
         cmdType = "query";
@@ -163,6 +164,8 @@ $(function() {
 
     addAlias("count","select count(*) from $1");
 
+    addAlias("few","select * from $1");
+
     prettyPrinters.query = function(data, containerId) {
         var resultsStr = "";
         if (data.length > 0) {
@@ -186,17 +189,18 @@ $(function() {
        return  prettyPrinters.query.call(this, _.map(data, function(val){ return (val._1)?  [val._2, val._1] : [val];}), containerId);
     };
 
-    prettyPrinters.analyze = function(data, containerId) {
-        plotter.plot("#"+containerId, data.stats, data.histogram, data.metadata);
+    prettyPrinters.histogram = function(data, containerId) {
+        plotter.plotHistogram("#"+containerId, data.stats, data.histogram, data.metadata);
     };
 
-    prettyPrinters.dataset = function(data, containerId) {
+    prettyPrinters.graph = function(data, containerId) {
         var selector, graph;
-        selector = "#"+containerId
-        $(selector).append('<div class="search-graph"><button type="button" class="btn btn-small zoom-in" title="Zoom-In"><span class="icon icon-zoom-in zoom-in" /></button> <button type="button" class="btn btn-small" title="Zoom-Out"><span class="icon icon-zoom-out" /></button> <button type="button" class="btn btn-small" title="Rectangle-select"><span class="icon icon-pencil" /></button> <input type="text" placeholder="Search Vertices"/></div>')
+        selector = "#"+containerId;
+        $(selector).append('<div class="search-graph-ops"><button type="button" class="btn btn-small zoom-in" title="Zoom-In"><span class="icon icon-zoom-in zoom-in" /></button> <button type="button" class="btn btn-small" title="Zoom-Out"><span class="icon icon-zoom-out" /></button> <button type="button" class="btn btn-small" title="Rectangle-select"><span class="icon icon-pencil" /></button> <input type="text" placeholder="Search Vertices"/></div>');
         graph = plotter.graph(selector, data);
-        addSearch($(selector +" .search-graph input"), graph);
-        addZoom($(selector +" .search-graph button:not(:last)"), graph);
+        addSearch($(selector +" .search-graph-ops input"), graph);
+        addZoom($(selector +" .search-graph-ops button:not(:last)"), graph);
+        addStats($(selector +" .search-graph-ops"), graph)
     };
 
 
@@ -213,7 +217,10 @@ $(function() {
         elSelector.click(function(event) {
             var zoomIn = $(event.target).hasClass("zoom-in");
             graph.zoom(zoomIn);
-        })
+        });
     }
-    // support alias top10 = "select $2, count(*) as fieldCount from $1 group by $2 order by fieldCount desc limit 10 " 
+
+    function addStats(elSelector, graph) {
+        
+    }
 });

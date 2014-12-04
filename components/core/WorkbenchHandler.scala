@@ -14,6 +14,7 @@ import org.eclipse.jetty.server.handler._
 import org.codehaus.jackson.map.{ObjectMapper,JsonSerializer,SerializerProvider}
 import org.codehaus.jackson.map.module.SimpleModule
 import org.codehaus.jackson.JsonGenerator
+import java.lang.management.ManagementFactory
 
 /**
  * Simple servlet like thing for jetty, which runs simple commands from the UI
@@ -21,8 +22,13 @@ import org.codehaus.jackson.JsonGenerator
 class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") extends org.eclipse.jetty.server.handler.AbstractHandler {
 
   private val urlExtractor = """/([\w|-]+)\.(html|json|js|css|png)/*""".r
+
   private val objectMapper = new ObjectMapper()
+
+  private val memoryMBean = ManagementFactory.getMemoryMXBean()
+
   private val module = new SimpleModule("CustomSerializer", objectMapper.version)
+
   module.addSerializer(classOf[StatCounter], new StatCountSerializer)
   objectMapper.registerModule(module)
 
@@ -59,19 +65,13 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
     }
   }
 
-  // def sendStaticFile(fileNameWithoutExt :String, extension: String, response : HttpServletResponse) {
-  //   val source = scala.io.Source.fromFile(basePath + fileNameWithoutExt+"."+extension)
-  //   val lines = source.getLines mkString "\n"
-  //   source.close()
-  //   response.getWriter().println(lines)
-  // }
-
   def sendStaticFile(fileNameWithoutExt :String, extension: String, response : HttpServletResponse) {
     val bis = new BufferedInputStream(new FileInputStream(basePath + fileNameWithoutExt+"."+extension))
     val buffer = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
     bis.close();
     response.getOutputStream().write(buffer, 0, buffer.length);
   }
+
   def sendCommandResponse(request : HttpServletRequest, response : HttpServletResponse) {
     val payloadStr = request.getParameter("payload")
     val parsedPayload = JSON.parseFull(payloadStr).get.asInstanceOf[Map[String,String]]
@@ -79,9 +79,10 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
       val DynamicRequestMaker(payload) = parsedPayload
       payload.commandName match {
         case "query" => response.getWriter().println(runQuery(payload.commandArgs))
-        case "analyze" => response.getWriter().println(analyze(payload.commandArgs))
+        case "histogram" => response.getWriter().println(analyze(payload.commandArgs))
         case "desc" => response.getWriter().println(describe(payload.commandArgs))
-        case "dataset" =>  response.getWriter().println(getDataSet(payload.commandArgs))
+        case "graph" =>  response.getWriter().println(getDataSet(payload.commandArgs))
+        case "memory" => response.getWriter().println(getMemoryValues())
         case _ => reportFailure(response, new IllegalArgumentException(s"payload command sent as $payload.commandName"))
       }
     } catch {
@@ -119,22 +120,25 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
       val catalogField = sqlContext.getClass.getDeclaredField("catalog");
       allow(catalogField)
       val catalog = catalogField.get(sqlContext).asInstanceOf[org.apache.spark.sql.catalyst.analysis.SimpleCatalog]
+      val datasetNames:List[String] = DataSetManager.getAllNames()
       if (catalog != null) {
         val tablesField = catalog.getClass.getDeclaredField("tables")
         allow(tablesField)
         val tableNames = tablesField.get(catalog);
         if (tableNames != null){
-          toJSON(tableNames.asInstanceOf[mutable.HashMap[String, org.apache.spark.sql.catalyst.plans.logical.LogicalPlan]].keys.toArray)
-        } else {
-          "[]"
+          return toJSON((datasetNames ++ tableNames.asInstanceOf[mutable.HashMap[String, org.apache.spark.sql.catalyst.plans.logical.LogicalPlan]].keys.toList).toArray)
         }
-      } else {
-        "[]"
       }
+      return toJSON(datasetNames.toArray)
     } else {
       val columnSeq = sqlContext.sql(s"select * from $tableName limit 1").queryExecution.analyzed.output.map {attr => (attr.name, attr.dataType.toString)}
-      toJSON(columnSeq.toArray)
+      return toJSON(columnSeq.toArray)
     }
+    return "[]"
+  }
+
+  private def getMemoryValues():String = {
+    toJSON(memoryMBean.getHeapMemoryUsage())
   }
 
   private def rowsToJSON(rows: Array[org.apache.spark.sql.Row]):String = {

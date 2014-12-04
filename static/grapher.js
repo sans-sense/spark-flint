@@ -43,7 +43,7 @@ function Grapher() {
                 if (splits.length === 3) {
                     name = splits[1] + "." + splits[2];
                 }
-                nodes.push({"name": name}); 
+                nodes.push({"name": name, "fName":item._2});
                 nodeLookup[item._1] = index; });
         var links = _.map(
             graphData.links, 
@@ -170,7 +170,7 @@ function Grapher() {
 
     (function(){
         this.zoom = function(zoomIn) {
-            setPositions(0, 0, ((zoomIn)? 1:-1) * 0.05, d3.select(this.selector + " g.top-container"))
+            setPositions(0, 0, ((zoomIn)? 1:-1) * 0.05, d3.select(this.selector + " g.top-container"));
         };
 
         this.search = function(searchParam) {

@@ -12,4 +12,8 @@ object DataSetManager {
   def unregister(name:String) = {
     registry.remove(name)
   }
+
+  def getAllNames():List[String] = {
+    registry.keys.toList
+  }
 }

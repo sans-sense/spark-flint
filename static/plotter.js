@@ -20,7 +20,7 @@ function Plotter() {
         .scale(y)
         .orient("left");
 
-    this.plot = function(selector, stats, histogram, metaData) {
+    this.plotHistogram = function(selector, stats, histogram, metaData) {
         var domainValues = prepareDataset(histogram);
         d3.selectAll(selector+" svg").remove();
         var svg = createSVGContainer(selector);
