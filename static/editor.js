@@ -39,6 +39,7 @@ $(function() {
     var plotter = new Plotter();
     var aliases = {};
     var cmdRegex = /\s*(\S+)\s+(.+)/;
+    var cellMagician = new CellMagician();
 
     if (typeof String.prototype.format !== 'function') {
         String.prototype.format = function() {
@@ -58,7 +59,7 @@ $(function() {
     $(shellInputSel).keyup(function(event){
         var command = $(shellInputSel).val();
 	    var keycode = (event.keyCode ? event.keyCode : event.which);
-	    if(keycode == '13'){
+	    if(keycode == '13' && event.ctrlKey){
             $(resultsSel).append("<br>" + shellPrompt + command);
             $(shellInputContainerSel).hide();
             runCommand(command);
@@ -71,26 +72,30 @@ $(function() {
     });
 
     function runCommand(command) {
-        var cmdSplits = cmdRegex.exec(command);
-        if (cmdSplits === null) {
-            cmdSplits = ["",command];
-        }
         commandStack.push(command);
-        if (localCommands[cmdSplits[1]]) {
-            setInputCmdAs();
-            localCommands[cmdSplits[1]].call(this, command);
+        if (command.indexOf("%%") === 0) {
+            cellMagician.runCommand(command);
         } else {
-            if (aliases[cmdSplits[1]]) {
-                command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","));
+            var cmdSplits = cmdRegex.exec(command);
+            if (cmdSplits === null) {
+                cmdSplits = ["",command];
             }
-            runServerCommand(command);
+            if (localCommands[cmdSplits[1]]) {
+                localCommands[cmdSplits[1]].call(this, command);
+            } else {
+                if (aliases[cmdSplits[1]]) {
+                    command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","));
+                }
+                runServerCommand(command);
+            }
         }
+        setInputCmdAs();
     }
 
     function runServerCommand(commandStr) {
 		var resultsStr = "";
         var commandHolder = { id:commandNumber};
-        var cmdParser = /^(desc|histogram|graph)\s*(.*)/;
+        var cmdParser = /^(desc|histogram|graph|scala)\s*(.*)/;
         var parsedResults;
         var cmdType, cmdArgs;
         cmdType = "query";
@@ -118,10 +123,8 @@ $(function() {
             }
             commandResults.push(commandHolder);
             commandNumber++;
-            setInputCmdAs();
         }).error(function(data) {
             setCmdResult(resultContainerId,"<br>Could not execute query, check the syntax of the query, remove semi comlons if used at end of query");
-            setInputCmdAs();
         });
     }
 
@@ -147,6 +150,7 @@ $(function() {
         var initialCommand = command || "";
         $(shellInputSel).val(initialCommand);
         $(shellInputContainerSel).show();
+        $(shellInputSel).trigger('autosize.resize');
         $(shellInputSel).focus();
     }
 
@@ -221,6 +225,9 @@ $(function() {
     }
 
     function addStats(elSelector, graph) {
-        
+        var graphData = graph.data;
+        $(elSelector).append("<div>vertices : "+graphData.nodes.length+", edges:"+graphData.links.length+"</div>");
     }
+
+    $("#shellInput").autosize();
 });

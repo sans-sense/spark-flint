@@ -1,4 +1,4 @@
-import java.io.{FileInputStream, BufferedInputStream, IOException};
+import java.io.{FileInputStream, BufferedInputStream, IOException, ByteArrayOutputStream, PrintStream, FileDescriptor};
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,6 +83,7 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
         case "desc" => response.getWriter().println(describe(payload.commandArgs))
         case "graph" =>  response.getWriter().println(getDataSet(payload.commandArgs))
         case "memory" => response.getWriter().println(getMemoryValues())
+        case "scala" => response.getWriter().println(runScalaCommand(payload.commandArgs))
         case _ => reportFailure(response, new IllegalArgumentException(s"payload command sent as $payload.commandName"))
       }
     } catch {
@@ -137,6 +138,26 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
     return "[]"
   }
 
+  private def runScalaCommand(command:String):String = {
+    val sparkILoop = org.apache.spark.repl.Main.interp
+    val outField = sparkILoop.getClass.getDeclaredField("out")
+    val nestedOutField = classOf[java.io.PrintWriter].getDeclaredField("out")
+    outField.setAccessible(true)
+    nestedOutField.setAccessible(true)
+    val iLoopWriter = outField.get(sparkILoop)
+    val target = nestedOutField.get(iLoopWriter).asInstanceOf[java.io.Writer]
+    val proxy = new DelegatingWriter(target)
+    nestedOutField.set(iLoopWriter, proxy)
+    try {
+      sparkILoop.command(command)
+      nestedOutField.set(iLoopWriter, target)
+      val values = proxy.getValues()
+      return values
+    } catch {
+      case ex: Exception => ex.getMessage()
+    } 
+  }
+
   private def getMemoryValues():String = {
     toJSON(memoryMBean.getHeapMemoryUsage())
   }
@@ -172,4 +193,6 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
       jgen.writeEndObject();
     }
   }
+
 }
+

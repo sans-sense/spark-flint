@@ -26,9 +26,10 @@ def changeHandler(handler: AbstractHandler, actualHandler:ContextHandler, server
   server.start
 }
 
+// all  interesting things are private, so let's break it
+def allow(field: java.lang.reflect.Field)=field.setAccessible(true)
+
 def getServer(sc: org.apache.spark.SparkContext):Server = {
-  // all  interesting things are private, so let's break it
-  def allow(field: java.lang.reflect.Field)=field.setAccessible(true)
   val uiField = sc.getClass.getDeclaredField("ui");
   val serverInfoField = Class.forName("org.apache.spark.ui.WebUI").getDeclaredField("serverInfo")
   val serverField = Class.forName("org.apache.spark.ui.ServerInfo").getDeclaredField("server")

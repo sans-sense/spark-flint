@@ -7,9 +7,10 @@
     position:absolute;
     top:50px;
     bottom:0px;
+    border: 5px solid black;
 }    
 
-.terminal input {    
+.terminal textarea,input {    
     background-color: black;
     border: medium none;
     color: #FFFFFF;
@@ -90,7 +91,7 @@ svg .axis-label {
 .search-graph-ops {
     float: right;
     color: black;
-    padding: 5px 20px 0px 0px; 
+    padding: 5px 20px 0px 10px; 
     text-align: left;
     position:absolute;
 }

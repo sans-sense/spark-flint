@@ -1,5 +1,6 @@
 import org.apache.spark.rdd._
 :load components/core/Utils.scala
+:load components/core/DelegatingWriter.scala
 :load components/core/DataSetManager.scala
 :load components/core/WorkbenchHandler.scala
 

@@ -42,3 +42,4 @@ once spark-shell starts and it gives the scala> prompt
 :load components/code-analysis/graphAnalysis.init
 This will run createGraph which exports a graph of all method invocations in spark lib as a graph, this does take a bit of time (1 minute or so)
 
+SPARK_MEM=2048m ../../spark/bin/spark-shell --jars ~/.m2/repository/org/ow2/asm/asm-all/5.0.3/asm-all-5.0.3.jar --total-executor-cores 4 --master local
