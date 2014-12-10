@@ -82,5 +82,5 @@ Adds methods:
      registerChurnsAsTable
      computeFrequentItems Methods, 
 For details look at codeAnalysis.init""")
-ComponentManager.describe("code-analysis")
+println(ComponentManager.describe("code-analysis"))
 

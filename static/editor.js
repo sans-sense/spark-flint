@@ -1,4 +1,3 @@
-// yes, I am in a time bubble and don't know any better libraries than jquery
 $(function() {
     var shellInputContainerSel = '#shellInputContainer';
     var shellInputSel = '#shellInput';
@@ -17,7 +16,8 @@ $(function() {
                          "desc [tableName]: if tableName is given gets the column names and type for this table or gets all available tables",
                          "aliases: lists all aliases, to use an alias type cmdName parameters e.g to run top10, use top10 commits,author",
                          "alias command=sql: aliases the sql with a command can be parameterized, run aliases for samples",
-                         "graph dataset: plots a force directed graph (flowery thingy) for a dataset, the dataset should have been registered before via the spark-shell"].join("<br>");
+                         "graph dataset: plots a force directed graph (flowery thingy) for a dataset, the dataset should have been registered before via the spark-shell",
+                         "scala command: run scala code on the driver"].join("<br>");
            $(resultsSel).append(helpStr);
        },
        "aliases": function() {
@@ -31,7 +31,6 @@ $(function() {
            addAlias(splits[1], splits[2]);
        }
     };
-    var prettyPrinters = {};
     var commandStack = [];
     var currHistoryCursor = 0;
     var commandNumber = 0;
@@ -82,6 +81,7 @@ $(function() {
             }
             if (localCommands[cmdSplits[1]]) {
                 localCommands[cmdSplits[1]].call(this, command);
+                $( "body" ).trigger("showInputCmd")
             } else {
                 if (aliases[cmdSplits[1]]) {
                     command = aliases[cmdSplits[1]].format((cmdSplits[2]||"").split(","));
@@ -89,13 +89,12 @@ $(function() {
                 runServerCommand(command);
             }
         }
-        setInputCmdAs();
     }
 
     function runServerCommand(commandStr) {
 		var resultsStr = "";
         var commandHolder = { id:commandNumber};
-        var cmdParser = /^(desc|histogram|graph|scala)\s*(.*)/;
+        var cmdParser = /^(desc|histogram|graph|scala)\s*([\s\S]*)/;
         var parsedResults;
         var cmdType, cmdArgs;
         cmdType = "query";
@@ -119,14 +118,20 @@ $(function() {
 			    $("#"+resultContainerId).html("<br>Could not execute query");
             } else {
                 commandHolder.result = data;
-                prettyPrinters[cmdType].call(this,data, resultContainerId);
+                prettyPrinters[cmdType].call(this, data, resultContainerId);
             }
             commandResults.push(commandHolder);
             commandNumber++;
+            $( "body" ).trigger("showInputCmd")
         }).error(function(data) {
-            setCmdResult(resultContainerId,"<br>Could not execute query, check the syntax of the query, remove semi comlons if used at end of query");
+-            prettyPrinters.error("<br>Could not execute query, check the syntax of the query, remove semi comlons if used at end of query", resultContainerId);
+            $( "body" ).trigger("showInputCmd")
         });
     }
+
+    $("body").on("showInputCmd", function() {
+        setInputCmdAs();
+    });
 
     function getNextCommand() {
         if (currHistoryCursor < commandStack.length - 1) {
@@ -154,10 +159,6 @@ $(function() {
         $(shellInputSel).focus();
     }
 
-    function setCmdResult(containerId, contents) {
-        $("#"+containerId).html(contents);
-    }
-
     function addAlias(commandName, commandValue) {
         aliases[commandName] = commandValue;
     }
@@ -168,66 +169,9 @@ $(function() {
 
     addAlias("count","select count(*) from $1");
 
-    addAlias("few","select * from $1");
+    addAlias("few","select * from $1 limit 10");
 
-    prettyPrinters.query = function(data, containerId) {
-        var resultsStr = "";
-        if (data.length > 0) {
-            resultsStr +="<table class='table table-bordered table-results'>";
-            $.each(data, function(){
-				var trStr = "<tr>";
-				$.each(this, function(k, v){
-					trStr += "<td>"+v+"</td>";
-				});
-				resultsStr += trStr;
-			}); //end of each block
-            resultsStr += "</table>";
-        } else {
-            resultsStr = "<br>No rows returned for this query";
-        }
-        
-        setCmdResult(containerId,resultsStr);
-    };
+    $(shellInputSel).autosize();
+    $(shellInputSel).focus();
 
-    prettyPrinters.desc = function(data, containerId) {
-       return  prettyPrinters.query.call(this, _.map(data, function(val){ return (val._1)?  [val._2, val._1] : [val];}), containerId);
-    };
-
-    prettyPrinters.histogram = function(data, containerId) {
-        plotter.plotHistogram("#"+containerId, data.stats, data.histogram, data.metadata);
-    };
-
-    prettyPrinters.graph = function(data, containerId) {
-        var selector, graph;
-        selector = "#"+containerId;
-        $(selector).append('<div class="search-graph-ops"><button type="button" class="btn btn-small zoom-in" title="Zoom-In"><span class="icon icon-zoom-in zoom-in" /></button> <button type="button" class="btn btn-small" title="Zoom-Out"><span class="icon icon-zoom-out" /></button> <button type="button" class="btn btn-small" title="Rectangle-select"><span class="icon icon-pencil" /></button> <input type="text" placeholder="Search Vertices"/></div>');
-        graph = plotter.graph(selector, data);
-        addSearch($(selector +" .search-graph-ops input"), graph);
-        addZoom($(selector +" .search-graph-ops button:not(:last)"), graph);
-        addStats($(selector +" .search-graph-ops"), graph)
-    };
-
-
-    function addSearch(elSelector, graph) {
-        elSelector.keypress(function(event) {
-            var keycode = (event.keyCode ? event.keyCode : event.which);
-	        if(keycode == '13'){
-		        graph.search(elSelector.val());
-	        }
-        });
-    }
-
-    function addZoom(elSelector, graph) {
-        elSelector.click(function(event) {
-            var zoomIn = $(event.target).hasClass("zoom-in");
-            graph.zoom(zoomIn);
-        });
-    }
-
-    function addStats(elSelector, graph) {
-        var graphData = graph.data;
-        $(elSelector).append("<div>vertices : "+graphData.nodes.length+", edges:"+graphData.links.length+"</div>");
-    }
-
-    $("#shellInput").autosize();
 });

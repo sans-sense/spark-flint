@@ -140,19 +140,14 @@ class WorkbenchHandler(sqlContext: SQLContext, basePath:String = "./static/") ex
 
   private def runScalaCommand(command:String):String = {
     val sparkILoop = org.apache.spark.repl.Main.interp
-    val outField = sparkILoop.getClass.getDeclaredField("out")
-    val nestedOutField = classOf[java.io.PrintWriter].getDeclaredField("out")
-    outField.setAccessible(true)
-    nestedOutField.setAccessible(true)
-    val iLoopWriter = outField.get(sparkILoop)
-    val target = nestedOutField.get(iLoopWriter).asInstanceOf[java.io.Writer]
-    val proxy = new DelegatingWriter(target)
-    nestedOutField.set(iLoopWriter, proxy)
     try {
+      val originalOut = scala.Console.out
+      scala.Console.setOut(new DelegatingPrintStream(originalOut))
+      CaptureAllBuffer.clear
       sparkILoop.command(command)
-      nestedOutField.set(iLoopWriter, target)
-      val values = proxy.getValues()
-      return values
+      val resultStr = CaptureAllBuffer.toString
+      scala.Console.setOut(originalOut)
+      return toJSON(resultStr)
     } catch {
       case ex: Exception => ex.getMessage()
     } 

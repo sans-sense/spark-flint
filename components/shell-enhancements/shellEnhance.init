@@ -2,4 +2,4 @@
 ComponentManager.register("shell-enhance", """
 Adds  SourceUtil Module which has handy methods to examine classes
  for details try SourceUtil.printSelf or look at SourceUtil.scala""")
-ComponentManager.describe("shell-enhance")
+println(ComponentManager.describe("shell-enhance"))
